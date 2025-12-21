@@ -71,7 +71,8 @@ end
 
 -- Search for issues using JQL
 function M.search_issues(jql, page_token, max_results, fields)
-  fields = fields or { "summary", "status", "parent", "priority", "assignee", "timespent", "timeestimate", "issuetype" }
+  local story_point_field = config.jira.story_point_field
+  fields = fields or { "summary", "status", "parent", "priority", "assignee", "timespent", "timeestimate", "issuetype", story_point_field }
 
   local data = {
     jql = jql,

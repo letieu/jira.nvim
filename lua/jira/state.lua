@@ -11,6 +11,7 @@ local state = {
       email = os.getenv("JIRA_EMAIL"),
       token = os.getenv("JIRA_TOKEN"),
       project = os.getenv("JIRA_PROJECT"),
+      story_point_field = os.getenv("JIRA_STORY_POINT_FIELD") or "customfield_10023",
     }
   }
 }

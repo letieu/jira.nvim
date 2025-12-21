@@ -81,6 +81,9 @@ function M.get_active_sprint_issues()
         time_estimate = fields.timeestimate
       end
 
+      local story_point_field = config.jira.story_point_field
+      local story_points = safe_get(fields, story_point_field)
+
       table.insert(all_issues, {
         key = issue.key,
         summary = fields.summary or "",
@@ -91,6 +94,7 @@ function M.get_active_sprint_issues()
         time_spent = time_spent,
         time_estimate = time_estimate,
         type = issue_type,
+        story_points = story_points,
       })
     end
 

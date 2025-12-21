@@ -9,6 +9,7 @@ local M = {}
 ---@field priority? string
 ---@field time_spent? number
 ---@field time_estimate? number
+---@field story_points? number
 
 ---@class JiraIssueNode : JiraIssue
 ---@field children JiraIssueNode[]

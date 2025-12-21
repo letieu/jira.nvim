@@ -8,14 +8,6 @@ local MAX = {
   STATUS = 14,
 }
 
--- ---------------------------------------------
--- Devicons (optional dependency)
--- ---------------------------------------------
-local has_devicons, devicons = pcall(require, "nvim-web-devicons")
-if not has_devicons then
-  devicons = nil
-end
-
 local M = {}
 
 local function truncate(str, max)
@@ -102,8 +94,11 @@ local function render_issue_line(node, depth, row)
 
   local key = node.key or ""
   local title = truncate(node.summary or "", MAX.TITLE)
-  local points = node.points or 2
-  local pts = is_root and string.format("  %d", points) or ""
+  local points = node.story_points or node.points
+  if points == nil or points == vim.NIL then
+    points = "?"
+  end
+  local pts = is_root and string.format("  %s", points) or ""
 
   local status = truncate(node.status or "Unknown", MAX.STATUS)
 
@@ -166,7 +161,7 @@ local function render_issue_line(node, depth, row)
   local full_line = left .. padding .. right_part
 
   local right_col_start = #left + #padding
-  
+
   -- Highlight Column 1 (Time Info)
   if col1_str ~= "" then
     add_hl(highlights, right_col_start, col1_str, "Comment")
@@ -178,7 +173,8 @@ local function render_issue_line(node, depth, row)
     local filled_bytes = bar_filled_len * 3
     local empty_bytes = (bar_width - bar_filled_len) * 3
     add_hl(highlights, right_col2_start, string.sub(col2_str, 1, filled_bytes), "exgreen")
-    add_hl(highlights, right_col2_start + filled_bytes, string.sub(col2_str, filled_bytes + 1, filled_bytes + empty_bytes), "linenr")
+    add_hl(highlights, right_col2_start + filled_bytes,
+      string.sub(col2_str, filled_bytes + 1, filled_bytes + empty_bytes), "linenr")
   else
     local hl = (node.assignee == nil or node.assignee == "Unassigned") and "JiraAssigneeUnassigned" or "JiraAssignee"
     add_hl(highlights, right_col2_start, col2_str, hl)
