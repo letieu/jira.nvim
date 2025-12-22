@@ -298,6 +298,8 @@ function M.render_help(view)
     { k = "B", d = "Switch to Backlog" },
     { k = "J", d = "Custom JQL Search" },
     { k = "K", d = "Show Issue Details (Popup)" },
+    { k = "m", d = "Read Task as Markdown" },
+    { k = "gx", d = "Open Task in Browser" },
     { k = "r", d = "Refresh current view" },
     { k = "H", d = "Show this Help" },
     { k = "q", d = "Close Board" },

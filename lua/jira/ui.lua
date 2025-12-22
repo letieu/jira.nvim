@@ -170,7 +170,7 @@ function M.start_loading(msg)
   local idx = 1
   spinner_timer = vim.loop.new_timer()
   spinner_timer:start(0, 100, vim.schedule_wrap(function()
-    if not api.nvim_buf_is_valid(spinner_buf) then return end
+    if not spinner_buf or not api.nvim_buf_is_valid(spinner_buf) then return end
     local frame = spinner_frames[idx]
     api.nvim_buf_set_lines(spinner_buf, 0, -1, false, { " " .. frame .. " " .. msg })
     idx = (idx % #spinner_frames) + 1
@@ -285,6 +285,31 @@ function M.show_issue_details_popup(node)
       end
     end,
   })
+end
+
+function M.open_markdown_view(title, lines)
+  local buf = api.nvim_create_buf(false, true)
+  api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  
+  api.nvim_buf_set_option(buf, "filetype", "markdown")
+  api.nvim_buf_set_option(buf, "buftype", "nofile")
+  api.nvim_buf_set_option(buf, "bufhidden", "wipe")
+  api.nvim_buf_set_name(buf, title)
+
+  local width = math.floor(vim.o.columns * 0.8)
+  local height = math.floor(vim.o.lines * 0.8)
+  
+  local win = api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = (vim.o.lines - height) / 2,
+    col = (vim.o.columns - width) / 2,
+    style = "minimal",
+    border = "rounded",
+  })
+
+  vim.keymap.set("n", "q", function() api.nvim_win_close(win, true) end, { buffer = buf, silent = true })
 end
 
 return M

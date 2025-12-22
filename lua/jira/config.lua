@@ -2,6 +2,7 @@ local M = {}
 
 local FALLBACKS = {
   story_point_field = "customfield_10035",
+  acceptance_criteria_field = "customfield_10016",
 }
 
 ---@class JiraConfig
@@ -41,6 +42,7 @@ function M.get_project_config(project_key)
 
   return {
     story_point_field = p_config.story_point_field or FALLBACKS.story_point_field,
+    acceptance_criteria_field = p_config.acceptance_criteria_field or FALLBACKS.acceptance_criteria_field,
   }
 end
 

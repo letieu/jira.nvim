@@ -67,4 +67,68 @@ M.format_time = function(seconds)
   return string.format("%.1f", hours)
 end
 
+---@param node table
+---@return string
+local function parse_adf(node)
+  if not node or node == vim.NIL then return "" end
+  if node.type == "text" then
+    local text = node.text or ""
+    if node.marks then
+      for _, mark in ipairs(node.marks) do
+        if mark.type == "strong" then text = "**" .. text .. "**" end
+        if mark.type == "em" then text = "_" .. text .. "_" end
+        if mark.type == "code" then text = "`" .. text .. "`" end
+        if mark.type == "strike" then text = "~~" .. text .. "~~" end
+        if mark.type == "link" then text = string.format("[%s](%s)", text, mark.attrs.href) end
+      end
+    end
+    return text
+  elseif node.type == "hardBreak" then
+    return "\n"
+  elseif node.content then
+    local parts = {}
+    for _, child in ipairs(node.content) do
+      table.insert(parts, parse_adf(child))
+    end
+    local joined = table.concat(parts, "")
+
+    if node.type == "paragraph" then
+      return joined .. "\n\n"
+    elseif node.type == "heading" then
+      local level = node.attrs and node.attrs.level or 1
+      return string.rep("#", level) .. " " .. joined .. "\n\n"
+    elseif node.type == "listItem" then
+      return joined
+    elseif node.type == "bulletList" then
+      local list_parts = {}
+      for _, child in ipairs(node.content) do
+        table.insert(list_parts, "- " .. parse_adf(child))
+      end
+      return table.concat(list_parts, "") .. "\n"
+    elseif node.type == "orderedList" then
+      local list_parts = {}
+      for i, child in ipairs(node.content) do
+        table.insert(list_parts, i .. ". " .. parse_adf(child))
+      end
+      return table.concat(list_parts, "") .. "\n"
+    elseif node.type == "codeBlock" then
+      local lang = node.attrs and node.attrs.language or ""
+      return "```" .. lang .. "\n" .. joined .. "\n```\n\n"
+    elseif node.type == "blockquote" then
+      return "> " .. joined:gsub("\n", "> ") .. "\n\n"
+    elseif node.type == "rule" then
+      return "---\n\n"
+    end
+    return joined
+  end
+  return ""
+end
+
+---@param adf table?
+---@return string
+M.adf_to_markdown = function(adf)
+  if not adf then return "" end
+  return parse_adf(adf)
+end
+
 return M

@@ -51,6 +51,8 @@ M.setup_keymaps = function()
   vim.keymap.set("n", "J", function() require("jira").prompt_jql() end, opts)
   vim.keymap.set("n", "H", function() require("jira").load_view(state.project_key, "Help") end, opts)
   vim.keymap.set("n", "K", function() require("jira").show_issue_details() end, opts)
+  vim.keymap.set("n", "m", function() require("jira").read_task() end, opts)
+  vim.keymap.set("n", "gx", function() require("jira").open_in_browser() end, opts)
 
   -- Actions
   vim.keymap.set("n", "r", function()
@@ -161,6 +163,79 @@ M.show_issue_details = function()
   if not node then return end
 
   ui.show_issue_details_popup(node)
+end
+
+M.read_task = function()
+  local cursor = api.nvim_win_get_cursor(state.win)
+  local row = cursor[1] - 1
+  local node = state.line_map[row]
+  if not node or not node.key then return end
+
+  ui.start_loading("Fetching full details for " .. node.key .. "...")
+  local jira_api = require("jira.jira-api.api")
+  jira_api.get_issue(node.key, function(issue, err)
+    vim.schedule(function()
+      ui.stop_loading()
+      if err then
+        vim.notify("Error: " .. err, vim.log.levels.ERROR)
+        return
+      end
+
+      local fields = issue.fields or {}
+      local lines = {}
+      table.insert(lines, "# " .. issue.key .. ": " .. (fields.summary or ""))
+      table.insert(lines, "")
+      table.insert(lines, "**Status**: " .. (fields.status and fields.status.name or "Unknown"))
+      table.insert(lines, "**Assignee**: " .. (fields.assignee and fields.assignee.displayName or "Unassigned"))
+      table.insert(lines, "**Priority**: " .. (fields.priority and fields.priority.name or "None"))
+      table.insert(lines, "")
+      table.insert(lines, "## Description")
+      table.insert(lines, "")
+
+      if fields.description then
+        local md = util.adf_to_markdown(fields.description)
+        for line in md:gmatch("[^\r\n]+") do
+          table.insert(lines, line)
+        end
+      else
+        table.insert(lines, "_No description_")
+      end
+
+      local p_config = config.get_project_config(state.project_key)
+      local ac_field = p_config.acceptance_criteria_field
+      if ac_field and fields[ac_field] then
+        table.insert(lines, "")
+        table.insert(lines, "## Acceptance Criteria")
+        table.insert(lines, "")
+        local ac_md = util.adf_to_markdown(fields[ac_field])
+        for line in ac_md:gmatch("[^\r\n]+") do
+          table.insert(lines, line)
+        end
+      end
+
+      ui.open_markdown_view("Jira: " .. issue.key, lines)
+    end)
+  end)
+end
+
+M.open_in_browser = function()
+  local cursor = api.nvim_win_get_cursor(state.win)
+  local row = cursor[1] - 1
+  local node = state.line_map[row]
+  if not node or not node.key then return end
+
+  local base = config.options.jira.base
+  if not base or base == "" then
+    vim.notify("Jira base URL is not configured", vim.log.levels.ERROR)
+    return
+  end
+
+  if not base:match("/$") then
+    base = base .. "/"
+  end
+
+  local url = base .. "browse/" .. node.key
+  vim.ui.open(url)
 end
 
 M.open = function(project_key)
