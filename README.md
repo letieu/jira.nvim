@@ -83,6 +83,7 @@ If you don't provide a project key, you will be prompted to enter one.
 - [x] Change status
 - [x] Change assignee
 - [x] Log time
+- [ ] **WORKING ON**: Task info view mode 
 - [ ] Comment
 - [ ] Edit task
 - [ ] Update UI when terminal size change
