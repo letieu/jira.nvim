@@ -3,7 +3,7 @@ local M = {}
 local FALLBACKS = {
   story_point_field = "customfield_10035",
   custom_fields = {
-    { key = "customfield_10016", label = "Acceptance Criteria" }
+    -- { key = "customfield_10016", label = "Acceptance Criteria" }
   },
 }
 
@@ -28,7 +28,8 @@ M.defaults = {
   },
   projects = {},
   queries = {
-    ["Backlog"] = "project = '%s' AND (sprint is EMPTY OR sprint not in openSprints()) AND statusCategory != Done ORDER BY Rank ASC",
+    ["Backlog"] =
+    "project = '%s' AND (sprint is EMPTY OR sprint not in openSprints()) AND statusCategory != Done ORDER BY Rank ASC",
     ["My Tasks"] = "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC",
   }
 }

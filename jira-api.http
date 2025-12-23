@@ -290,8 +290,6 @@ Accept: application/json
 ### Get list fields
 GET {{baseUrl}}/rest/api/3/field
 Authorization: Basic {{email}}:{{token}}
-Content-Type: application/json
-Accept: application/json
 
 ### Agile
 GET {{baseUrl}}/rest/agile/1.0/sprint/45/issue

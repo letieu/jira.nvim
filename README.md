@@ -29,9 +29,11 @@ require('jira').setup({
   -- Project-specific overrides
   -- Still think about this config, maybe not good enough
   projects = {
-    ["MOBILE"] = {
-      story_point_field = "customfield_12345",      -- Custom field ID for story points
-      acceptance_criteria_field = "customfield_10011", -- Custom field ID for AC
+    ["DEV"] = {
+      story_point_field = "customfield_10035",      -- Custom field ID for story points
+      custom_fields = { -- Custom field to display in markdown view
+        { key = "customfield_10016", label = "Acceptance Criteria" }
+      },
     }
   }
 })
@@ -52,6 +54,10 @@ If you don't provide a project key, you will be prompted to enter one.
 | Key | Action |
 | --- | --- |
 | `H` | Show help |
+
+## Tips
+
+- How to get custom field list -> go to `https://your-domain.atlassian.net/rest/api/3/field`
 
 ## Features (AI generated)
 
