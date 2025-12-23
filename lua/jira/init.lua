@@ -14,6 +14,12 @@ M.setup = function(opts)
   config.setup(opts)
 end
 
+M.refresh_view = function()
+  local cache_key = helper.get_cache_key(state.project_key, state.current_view)
+  state.cache[cache_key] = nil
+  M.load_view(state.project_key, state.current_view)
+end
+
 M.toggle_node = function()
   local cursor = api.nvim_win_get_cursor(state.win)
   local node = helper.get_node_at_cursor()
@@ -29,17 +35,6 @@ M.toggle_node = function()
     end
     api.nvim_win_set_cursor(state.win, cursor)
   end
-end
-
-local function get_cache_key(project_key, view_name)
-  local key = project_key .. ":" .. view_name
-  if view_name == "JQL" then
-    key = key .. ":" .. (state.current_query or "Custom JQL")
-    if state.current_query == "Custom JQL" then
-      key = key .. ":" .. (state.custom_jql or "")
-    end
-  end
-  return key
 end
 
 M.get_query_names = function()
@@ -106,11 +101,8 @@ M.setup_keymaps = function()
       api.nvim_win_close(state.win, true)
     end
   end, opts)
-  vim.keymap.set("n", "r", function()
-    local cache_key = get_cache_key(state.project_key, state.current_view)
-    state.cache[cache_key] = nil
-    require("jira").load_view(state.project_key, state.current_view)
-  end, opts)
+
+  vim.keymap.set("n", "r", function() require("jira").refresh_view() end, opts)
 
   -- Navigation
   vim.keymap.set("n", "<Tab>", function() require("jira").toggle_node() end, opts)
@@ -133,6 +125,7 @@ M.setup_keymaps = function()
   vim.keymap.set("n", "gx", function() require("jira").open_in_browser() end, opts)
   vim.keymap.set("n", "s", function() require("jira").change_status() end, opts)
   vim.keymap.set("n", "a", function() require("jira").change_assignee() end, opts)
+  vim.keymap.set("n", "t", function() require("jira").log_time() end, opts)
 end
 
 M.load_view = function(project_key, view_name)
@@ -165,7 +158,7 @@ M.load_view = function(project_key, view_name)
     end
   end
 
-  local cache_key = get_cache_key(project_key, view_name)
+  local cache_key = helper.get_cache_key(project_key, view_name)
   local cached_issues = state.cache[cache_key]
 
   local function process_issues(issues)
@@ -272,7 +265,7 @@ M.change_status = function()
 
             vim.notify("Updated " .. node.key .. " to " .. choice, vim.log.levels.INFO)
             -- Clear cache and reload view
-            local cache_key = get_cache_key(state.project_key, state.current_view)
+            local cache_key = helper.get_cache_key(state.project_key, state.current_view)
             state.cache[cache_key] = nil
             M.load_view(state.project_key, state.current_view)
           end)
@@ -311,7 +304,7 @@ M.change_assignee = function()
                 return
               end
               vim.notify("Assigned " .. node.key .. " to you", vim.log.levels.INFO)
-              local cache_key = get_cache_key(state.project_key, state.current_view)
+              local cache_key = helper.get_cache_key(state.project_key, state.current_view)
               state.cache[cache_key] = nil
               M.load_view(state.project_key, state.current_view)
             end)
@@ -328,7 +321,7 @@ M.change_assignee = function()
             return
           end
           vim.notify("Unassigned " .. node.key, vim.log.levels.INFO)
-          local cache_key = get_cache_key(state.project_key, state.current_view)
+          local cache_key = helper.get_cache_key(state.project_key, state.current_view)
           state.cache[cache_key] = nil
           M.load_view(state.project_key, state.current_view)
         end)
@@ -394,13 +387,15 @@ M.log_time = function()
 
   local jira_api = require("jira.jira-api.api")
 
-  vim.ui.input({ prompt = "Log time for " .. node.key .. ":" }, function(value)
-    value = util.strim(value)
+  vim.ui.input({ prompt = "Log time for " .. node.key .. " (h):" }, function(value)
     if not value then return end
+    value = util.strim(value)
     if value == "" then return end
     if value == "0" then return end
 
-    print("Time", value)
+    local time_string = value .. "h"
+    jira_api.add_worklog(node.key, time_string, function()
+    end)
   end)
 end
 

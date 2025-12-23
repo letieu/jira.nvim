@@ -9,4 +9,15 @@ M.get_node_at_cursor = function()
   return node
 end
 
+M.get_cache_key = function(project_key, view_name)
+  local key = project_key .. ":" .. view_name
+  if view_name == "JQL" then
+    key = key .. ":" .. (state.current_query or "Custom JQL")
+    if state.current_query == "Custom JQL" then
+      key = key .. ":" .. (state.custom_jql or "")
+    end
+  end
+  return key
+end
+
 return M
