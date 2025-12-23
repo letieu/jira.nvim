@@ -52,17 +52,17 @@ local function curl_request(method, endpoint, data, callback)
   local stderr = {}
 
   vim.fn.jobstart(cmd, {
-    on_stdout = function(_, d, _) 
+    on_stdout = function(_, d, _)
       for _, chunk in ipairs(d) do
         if chunk ~= "" then table.insert(stdout, chunk) end
       end
     end,
-    on_stderr = function(_, d, _) 
+    on_stderr = function(_, d, _)
       for _, chunk in ipairs(d) do
         if chunk ~= "" then table.insert(stderr, chunk) end
       end
     end,
-    on_exit = function(_, code, _) 
+    on_exit = function(_, code, _)
       if code ~= 0 then
         if callback then callback(nil, "Curl failed: " .. table.concat(stderr, "\n")) end
         return
@@ -91,7 +91,9 @@ end
 function M.search_issues(jql, page_token, max_results, fields, callback, project_key)
   local p_config = config.get_project_config(project_key)
   local story_point_field = p_config.story_point_field
-  fields = fields or { "summary", "status", "parent", "priority", "assignee", "timespent", "timeoriginalestimate", "issuetype", story_point_field }
+  fields = fields or
+  { "summary", "status", "parent", "priority", "assignee", "timespent", "timeoriginalestimate", "issuetype",
+    story_point_field }
 
   local data = {
     jql = jql,
@@ -177,3 +179,4 @@ function M.get_project_statuses(project, callback)
 end
 
 return M
+

@@ -22,7 +22,7 @@ M.toggle_node = function()
     node.expanded = not node.expanded
     render.clear(state.buf)
     render.render_issue_tree(state.tree, state.current_view)
-    
+
     local line_count = api.nvim_buf_line_count(state.buf)
     if cursor[1] > line_count then
       cursor[1] = line_count
@@ -93,9 +93,9 @@ end
 
 M.setup_keymaps = function()
   local opts = { noremap = true, silent = true, buffer = state.buf }
-  
+
   -- Clear existing buffer keymaps
-  local keys_to_clear = { "o", "S", "B", "J", "H", "K", "m", "gx", "r", "q", "a", "s", "c", "l", "e", "i", "<Esc>", "1", "2", "3", "4", "5", "6", "7", "8", "9" }
+  local keys_to_clear = { "o", "S", "B", "J", "H", "K", "m", "gx", "r", "q", "a", "s", "c", "l", "e", "i", "<Esc>" }
   for _, k in ipairs(keys_to_clear) do
     pcall(vim.api.nvim_buf_del_keymap, state.buf, "n", k)
   end
@@ -103,7 +103,7 @@ M.setup_keymaps = function()
   -- General
   vim.keymap.set("n", "q", function()
     if state.win and api.nvim_win_is_valid(state.win) then
-       api.nvim_win_close(state.win, true)
+      api.nvim_win_close(state.win, true)
     end
   end, opts)
   vim.keymap.set("n", "r", function()
@@ -435,11 +435,12 @@ M.open = function(project_key)
   end
 
   if not project_key or project_key == "" then
-     vim.notify("Project key is required", vim.log.levels.ERROR)
-     return
+    vim.notify("Project key is required", vim.log.levels.ERROR)
+    return
   end
 
   M.load_view(project_key, "Active Sprint")
 end
 
 return M
+
