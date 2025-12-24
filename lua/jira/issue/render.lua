@@ -65,6 +65,7 @@ function M.render_content()
   local start_row = M.render_header()
   local lines = {}
   local hls = {}
+  state.comment_ranges = {}
 
   local fields = state.issue.fields or {}
 
@@ -109,20 +110,58 @@ function M.render_content()
       table.insert(lines, "")
       table.insert(lines, "Press 'c' to add a comment.")
     else
-      for _, comment in ipairs(state.comments) do
+      for i, comment in ipairs(state.comments) do
+        local comment_start_line = start_row + #lines
+        if i > 1 then
+          table.insert(lines, "")
+          table.insert(lines, string.rep("─", 40))
+          table.insert(hls, {
+            row = start_row + #lines - 1,
+            start_col = 0,
+            end_col = 40,
+            hl = "NonText",
+          })
+          comment_start_line = start_row + #lines
+        end
+
         local author = comment.author and comment.author.displayName or "Unknown"
         local created = comment.created or ""
-        table.insert(lines, "### " .. author .. " (" .. created .. ")")
-        table.insert(lines, "")
+        local ymd, hm = created:match("^(%d+-%d+-%d+)T(%d+:%d+)")
+        if ymd and hm then
+          created = ymd .. " " .. hm
+        end
+
+        table.insert(lines, author .. "  " .. created)
+        table.insert(hls, {
+          row = start_row + #lines - 1,
+          start_col = 0,
+          end_col = #author,
+          hl = "Title",
+        })
+        table.insert(hls, {
+          row = start_row + #lines - 1,
+          start_col = #author + 2,
+          end_col = #author + 2 + #created,
+          hl = "Comment",
+        })
+
         if comment.body then
           local c_md = util.adf_to_markdown(comment.body)
-          for line in c_md:gmatch("[^\r\n]+") do
+          local body_lines = vim.split(c_md, "\n")
+          while #body_lines > 0 and body_lines[#body_lines] == "" do
+            table.remove(body_lines)
+          end
+          for _, line in ipairs(body_lines) do
             table.insert(lines, line)
           end
         end
-        table.insert(lines, "")
-        table.insert(lines, "---")
-        table.insert(lines, "")
+
+        table.insert(state.comment_ranges, {
+          id = comment.id,
+          start_line = comment_start_line,
+          end_line = start_row + #lines - 1,
+          comment = comment,
+        })
       end
     end
   elseif state.active_tab == "help" then
@@ -134,7 +173,8 @@ function M.render_content()
       { k = "q",               d = "Close Window" },
 
       { section = "Actions" },
-      { k = "c",               d = "Add Comment (in Comments tab)" },
+      { k = "i",               d = "Add Comment (in Comments tab)" },
+      { k = "r",               d = "Edit Comment (in Comments tab)" },
     }
 
     for _, item in ipairs(help_content) do

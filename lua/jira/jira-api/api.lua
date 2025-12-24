@@ -1,5 +1,6 @@
 -- api.lua: Jira REST API client using curl
 local config = require("jira.common.config")
+local util = require("jira.common.util")
 
 -- Get environment variables
 local function get_env()
@@ -263,25 +264,44 @@ end
 
 -- Add comment to an issue
 function M.add_comment(issue_key, comment, callback)
+  local body
+  if type(comment) == "string" then
+    body = util.markdown_to_adf(comment)
+  else
+    body = comment
+  end
+
   local data = {
-    body = {
-      type = "doc",
-      version = 1,
-      content = {
-        {
-          type = "paragraph",
-          content = {
-            {
-              type = "text",
-              text = comment,
-            },
-          },
-        },
-      },
-    },
+    body = body,
   }
 
   curl_request("POST", "/rest/api/3/issue/" .. issue_key .. "/comment", data, function(_, err)
+    if err then
+      if callback then
+        callback(nil, err)
+      end
+      return
+    end
+    if callback then
+      callback(true, nil)
+    end
+  end)
+end
+
+-- Edit a comment
+function M.edit_comment(issue_key, comment_id, comment, callback)
+  local body
+  if type(comment) == "string" then
+    body = util.markdown_to_adf(comment)
+  else
+    body = comment
+  end
+
+  local data = {
+    body = body,
+  }
+
+  curl_request("PUT", "/rest/api/3/issue/" .. issue_key .. "/comment/" .. comment_id, data, function(_, err)
     if err then
       if callback then
         callback(nil, err)

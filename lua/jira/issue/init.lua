@@ -2,6 +2,7 @@ local state = require("jira.issue.state")
 local render = require("jira.issue.render")
 local jira_api = require("jira.jira-api.api")
 local ui = require("jira.common.ui")
+local util = require("jira.common.util")
 
 local function setup_keymaps()
   local opts = { noremap = true, silent = true, buffer = state.buf }
@@ -36,17 +37,43 @@ local function setup_keymaps()
   end, opts)
 
   -- Add Comment
-  vim.keymap.set("n", "c", function()
+  vim.keymap.set("n", "i", function()
     if state.active_tab ~= "comments" then
       vim.notify("Switch to Comments tab to add a comment.", vim.log.levels.WARN)
       return
     end
 
-    vim.ui.input({ prompt = "Comment: " }, function(input)
-      if not input or input == "" then
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
+    vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
+
+    local width = math.floor(vim.o.columns * 0.6)
+    local height = math.floor(vim.o.lines * 0.4)
+    local win = vim.api.nvim_open_win(buf, true, {
+      relative = "editor",
+      width = width,
+      height = height,
+      row = (vim.o.lines - height) / 2,
+      col = (vim.o.columns - width) / 2,
+      style = "minimal",
+      border = "rounded",
+      title = " Add Comment (Press <C-s> to submit, <Esc> to cancel) ",
+      title_pos = "center",
+    })
+
+    vim.cmd("startinsert")
+
+    vim.keymap.set({ "n", "i" }, "<C-s>", function()
+      local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+      local input = table.concat(lines, "\n")
+      if input == "" then
+        vim.cmd("stopinsert")
+        vim.api.nvim_win_close(win, true)
         return
       end
 
+      vim.cmd("stopinsert")
+      vim.api.nvim_win_close(win, true)
       ui.start_loading("Adding comment...")
       jira_api.add_comment(state.issue.key, input, function(_, err)
         vim.schedule(function()
@@ -70,7 +97,90 @@ local function setup_keymaps()
           end)
         end)
       end)
-    end)
+    end, { buffer = buf })
+
+    vim.keymap.set("n", "<Esc>", function()
+      vim.cmd("stopinsert")
+      vim.api.nvim_win_close(win, true)
+    end, { buffer = buf })
+  end, opts)
+
+  -- Edit Comment
+  vim.keymap.set("n", "r", function()
+    if state.active_tab ~= "comments" then
+      return
+    end
+
+    local cursor_row = vim.api.nvim_win_get_cursor(0)[1] - 1
+    local target_comment = nil
+    for _, range in ipairs(state.comment_ranges) do
+      if cursor_row >= range.start_line and cursor_row <= range.end_line then
+        target_comment = range.comment
+        break
+      end
+    end
+
+    if not target_comment then
+      return
+    end
+
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
+    vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
+
+    local current_md = util.adf_to_markdown(target_comment.body)
+    local current_lines = vim.split(current_md, "\n")
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, current_lines)
+
+    local width = math.floor(vim.o.columns * 0.6)
+    local height = math.floor(vim.o.lines * 0.4)
+    local win = vim.api.nvim_open_win(buf, true, {
+      relative = "editor",
+      width = width,
+      height = height,
+      row = (vim.o.lines - height) / 2,
+      col = (vim.o.columns - width) / 2,
+      style = "minimal",
+      border = "rounded",
+      title = " Edit Comment (Press <C-s> to submit, <Esc> to cancel) ",
+      title_pos = "center",
+    })
+
+    vim.keymap.set({ "n", "i" }, "<C-s>", function()
+      local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+      local input = table.concat(lines, "\n")
+
+      vim.cmd("stopinsert")
+      vim.api.nvim_win_close(win, true)
+      ui.start_loading("Updating comment...")
+      jira_api.edit_comment(state.issue.key, target_comment.id, input, function(_, err)
+        vim.schedule(function()
+          ui.stop_loading()
+          if err then
+            vim.notify("Error updating comment: " .. err, vim.log.levels.ERROR)
+            return
+          end
+
+          -- Refresh comments
+          ui.start_loading("Refreshing comments...")
+          jira_api.get_comments(state.issue.key, function(comments, c_err)
+            vim.schedule(function()
+              ui.stop_loading()
+              if not c_err then
+                state.comments = comments
+                render.render_content()
+                vim.notify("Comment updated.", vim.log.levels.INFO)
+              end
+            end)
+          end)
+        end)
+      end)
+    end, { buffer = buf })
+
+    vim.keymap.set("n", "<Esc>", function()
+      vim.cmd("stopinsert")
+      vim.api.nvim_win_close(win, true)
+    end, { buffer = buf })
   end, opts)
 end
 

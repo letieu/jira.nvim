@@ -172,5 +172,98 @@ function M.strim(s)
   return s
 end
 
+function M.parse_inline_markdown(text)
+  local nodes = {}
+  local pos = 1
+  while pos <= #text do
+    -- Find next marker: ** (bold) or [ (link)
+    local s_bold, e_bold = text:find("%*%*.-%*%*", pos)
+    local s_link, e_link = text:find("%[.-%]%(.-%)", pos)
+
+    local type = nil
+    local start_idx, end_idx
+
+    if s_bold and (not s_link or s_bold < s_link) then
+      type = "bold"
+      start_idx = s_bold
+      end_idx = e_bold
+    elseif s_link then
+      type = "link"
+      start_idx = s_link
+      end_idx = e_link
+    end
+
+    if not type then
+      -- No more matches, add rest of text
+      table.insert(nodes, { type = "text", text = text:sub(pos) })
+      break
+    end
+
+    -- Add text before match
+    if start_idx > pos then
+      table.insert(nodes, { type = "text", text = text:sub(pos, start_idx - 1) })
+    end
+
+    if type == "bold" then
+      local content = text:sub(start_idx + 2, end_idx - 2)
+      table.insert(nodes, { type = "text", text = content, marks = { { type = "strong" } } })
+    elseif type == "link" then
+      local match = text:sub(start_idx, end_idx)
+      local link_text = match:match("%[(.-)%]")
+      local link_url = match:match("%((.-)%)")
+      table.insert(nodes, { type = "text", text = link_text, marks = { { type = "link", attrs = { href = link_url } } } })
+    end
+
+    pos = end_idx + 1
+  end
+
+  if #nodes == 0 then
+    table.insert(nodes, { type = "text", text = "" })
+  end
+
+  return nodes
+end
+
+---@param text string
+---@return table adf
+function M.markdown_to_adf(text)
+  local doc = {
+    type = "doc",
+    version = 1,
+    content = {}
+  }
+
+  local lines = vim.split(text, "\n")
+  local current_paragraph = nil
+
+  local function flush_paragraph()
+    if current_paragraph then
+      table.insert(doc.content, current_paragraph)
+      current_paragraph = nil
+    end
+  end
+
+  for _, line in ipairs(lines) do
+    if line == "" then
+      flush_paragraph()
+    else
+      if not current_paragraph then
+        current_paragraph = { type = "paragraph", content = {} }
+      else
+        -- Add space between lines in the same paragraph
+        table.insert(current_paragraph.content, { type = "text", text = " " })
+      end
+
+      local nodes = M.parse_inline_markdown(line)
+      for _, node in ipairs(nodes) do
+        table.insert(current_paragraph.content, node)
+      end
+    end
+  end
+  flush_paragraph()
+
+  return doc
+end
+
 return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:
