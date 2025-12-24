@@ -1,4 +1,4 @@
-local state = require('jira.board.state')
+local state = require("jira.board.state")
 
 local M = {}
 

@@ -142,7 +142,7 @@ local function parse_adf(node)
     return table.concat(list_parts, "") .. "\n"
   end
   if node.type == "codeBlock" then
-    return "```" .. (node.attrs and node.attrs.language or "").. "\n" .. joined .. "\n```\n\n"
+    return "```" .. (node.attrs and node.attrs.language or "") .. "\n" .. joined .. "\n```\n\n"
   end
   if node.type == "blockquote" then
     return "> " .. joined:gsub("\n", "> ") .. "\n\n"

@@ -32,12 +32,16 @@ local function fetch_issues_recursive(project, jql, callback)
   local function fetch_page(page_token)
     api.search_issues(jql, page_token, 100, nil, function(result, err)
       if err then
-        if callback then callback(nil, err) end
+        if callback then
+          callback(nil, err)
+        end
         return
       end
 
       if not result or not result.issues then
-        if callback then callback(all_issues, nil) end
+        if callback then
+          callback(all_issues, nil)
+        end
         return
       end
 
@@ -78,7 +82,9 @@ local function fetch_issues_recursive(project, jql, callback)
       end
 
       if not result.nextPageToken or #all_issues >= limit then
-        if callback then callback(all_issues, nil) end
+        if callback then
+          callback(all_issues, nil)
+        end
       else
         fetch_page(result.nextPageToken)
       end
@@ -91,14 +97,13 @@ end
 -- Get current active sprint issues
 function M.get_active_sprint_issues(project, callback)
   if not project then
-    if callback then callback(nil, "Project Key is required") end
+    if callback then
+      callback(nil, "Project Key is required")
+    end
     return
   end
 
-  local jql = string.format(
-    "project = '%s' AND sprint in openSprints() ORDER BY Rank ASC",
-    project
-  )
+  local jql = string.format("project = '%s' AND sprint in openSprints() ORDER BY Rank ASC", project)
 
   fetch_issues_recursive(project, jql, callback)
 end
@@ -106,7 +111,9 @@ end
 -- Get backlog issues
 function M.get_backlog_issues(project, callback)
   if not project then
-    if callback then callback(nil, "Project Key is required") end
+    if callback then
+      callback(nil, "Project Key is required")
+    end
     return
   end
 
@@ -121,7 +128,9 @@ end
 -- Get issues by custom JQL
 function M.get_issues_by_jql(project, jql, callback)
   if not project then
-    if callback then callback(nil, "Project Key is required") end
+    if callback then
+      callback(nil, "Project Key is required")
+    end
     return
   end
 

@@ -120,7 +120,7 @@ function M.setup_static_highlights()
   }
 
   for name, opts in pairs(hl) do
-      vim.api.nvim_set_hl(0, name, opts)
+    vim.api.nvim_set_hl(0, name, opts)
   end
 end
 

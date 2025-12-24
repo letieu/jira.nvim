@@ -8,7 +8,7 @@
 local M = {
   comments = {},
   active_tab = "description", -- "description" or "comments"
-  loading = false
+  loading = false,
 }
 
 return M
