@@ -1,16 +1,30 @@
-# jira.nvim [WIP]
+> [!CAUTION]
+> **Still in early development, will have breaking changes!**
 
-A Neovim plugin for managing JIRA tasks with a beautiful UI
+# jira.nvim
 
-**Still in early development, will have breaking changes**
+A Neovim plugin for managing JIRA tasks with a beautiful UI.
 
-<img width="3022" height="2162" alt="image" src="https://github.com/user-attachments/assets/611cdfb4-29ed-4d59-8362-74c142e81257" />
-
+![Showcase](https://github.com/user-attachments/assets/611cdfb4-29ed-4d59-8362-74c142e81257)
 
 > [!NOTE]
-> Disucssion: How do you want to create, edit the jira ticket in this plugin ?
+> Disucssion: How do you want to create, edit the jira ticket in this plugin?
 > https://github.com/letieu/jira.nvim/discussions/1
 
+## Features (AI generated)
+
+- 📋 View active sprint tasks
+- 👥 Query tasks by custom JQL
+- 📝 Read task as markdown
+- 🔄 Change task status
+- ⏱️ Log time on tasks
+- 👤 Assign tasks
+- 🎨 Git integration
+- 🎨 Edit task
+- 🎨 Comment
+- ⏱️ Work report
+
+---
 
 ## Configuration
 
@@ -44,6 +58,8 @@ require('jira').setup({
 })
 ```
 
+---
+
 ## Usage
 
 Run the following command to open the Jira board:
@@ -56,26 +72,17 @@ If you don't provide a project key, you will be prompted to enter one.
 
 ### Keybindings (Normal Mode)
 
-| Key | Action |
-| --- | --- |
-| `H` | Show help |
+| Key  | Action    |
+|------|-----------|
+| `H`  | Show help |
+
+---
 
 ## Tips
 
 - How to get custom field list -> go to `https://your-domain.atlassian.net/rest/api/3/field`
 
-## Features (AI generated)
-
-- 📋 View active sprint tasks
-- 👥 Query tasks by custom JQL
-- 📝 Read task as markdown
-- 🔄 Change task status
-- ⏱️ Log time on tasks
-- 👤 Assign tasks
-- 🎨 Git integration
-- 🎨 Edit task
-- 🎨 Comment
-- ⏱️ Work report
+---
 
 ## TODO
 - [x] Jira sprint board
@@ -88,15 +95,19 @@ If you don't provide a project key, you will be prompted to enter one.
 - [x] Change status
 - [x] Change assignee
 - [x] Log time
-- [ ] **WORKING ON**: Task info view mode 
+- [ ] **WORKING ON**: Task info view mode
 - [ ] Comment
 - [ ] Edit task
 - [ ] Update UI when terminal size change
-....
+...
 
+---
 
 ## Thanks
-Big thanks for `gemini` CLI free tier
+
+Big thanks for `gemini` CLI free tier.
+
+---
 
 ## License
 
