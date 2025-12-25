@@ -1,0 +1,18 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: remove-crlf
+      - id: forbid-crlf # Forbid files containing CRLF end-lines to be committed
+  - repo: local
+    hooks:
+      - id: make_lint
+        name: Run StyLua
+        language: system
+        types: [lua]
+        entry: stylua .
+        verbose: true
