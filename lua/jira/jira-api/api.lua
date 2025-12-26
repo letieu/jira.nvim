@@ -26,10 +26,22 @@ end
 ---@return boolean valid
 local function validate_env()
   local env = get_env()
-  if not env.base or not env.email or not env.token then
-    vim.notify("Missing Jira environment variables. Please check your setup.", vim.log.levels.ERROR)
+  if not env.base then
+    vim.notify("Missing Jira base URL. Please check your setup.", vim.log.levels.ERROR)
     return false
   end
+  
+  if not env.token or env.token == "" then
+    vim.notify("Missing Jira token. Please check your setup.", vim.log.levels.ERROR)
+    return false
+  end
+  
+  local auth_type = env.auth_type or "basic"
+  if auth_type == "basic" and (not env.email or env.email == "") then
+    vim.notify("Missing Jira email. Required for basic auth type.", vim.log.levels.ERROR)
+    return false
+  end
+  
   return true
 end
 
@@ -48,13 +60,24 @@ local function curl_request(method, endpoint, data, callback)
 
   local env = get_env()
   local url = env.base .. endpoint
-  local auth = env.email .. ":" .. env.token
+  local auth_type = env.auth_type or "basic"
 
-  -- Build curl command
-  local cmd = ('curl -s -X %s -H "Content-Type: application/json" -H "Accept: application/json" -u "%s" '):format(
-    method,
-    auth
-  )
+  -- Build curl command with authentication
+  local cmd
+  if auth_type == "bearer" then
+    -- Use bearer token authentication
+    cmd = ('curl -s -X %s -H "Content-Type: application/json" -H "Accept: application/json" -H "Authorization: Bearer %s" '):format(
+      method,
+      env.token
+    )
+  else
+    -- Use basic authentication (email + token)
+    local auth = env.email .. ":" .. env.token
+    cmd = ('curl -s -X %s -H "Content-Type: application/json" -H "Accept: application/json" -u "%s" '):format(
+      method,
+      auth
+    )
+  end
 
   local temp_file = nil
   if data then

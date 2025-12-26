@@ -42,8 +42,9 @@ A Neovim plugin for managing JIRA tasks with a beautiful UI.
     -- Your setup options...
     jira = {
       base = "https://your-domain.atlassian.net", -- Base URL of your Jira instance
-      email = "your-email@example.com",           -- Your Jira email
-      token = "your-api-token",                   -- Your Jira API token
+      email = "your-email@example.com",           -- Your Jira email (required for basic auth)
+      token = "your-api-token",                   -- Your Jira API token or bearer token
+      auth_type = "basic",                        -- "basic" (default) or "bearer"
       limit = 500,                                -- Global limit of tasks per view
     },
   },
@@ -59,8 +60,9 @@ require('jira').setup({
   -- Jira connection settings
   jira = {
     base = "https://your-domain.atlassian.net", -- Base URL of your Jira instance
-    email = "your-email@example.com",           -- Your Jira email
-    token = "your-api-token",                   -- Your Jira API token
+    email = "your-email@example.com",           -- Your Jira email (required for basic auth)
+    token = "your-api-token",                   -- Your Jira API token or bearer token
+    auth_type = "basic",                        -- "basic" (default) or "bearer"
     limit = 500,                                -- Global limit of tasks per view
   },
 
