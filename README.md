@@ -45,6 +45,7 @@ A Neovim plugin for managing JIRA tasks with a beautiful UI.
       email = "your-email@example.com",           -- Your Jira email (required for basic auth)
       token = "your-api-token",                   -- Your Jira API token or bearer token
       auth_type = "basic",                        -- "basic" (default) or "bearer"
+      use_jql_post = true,                        -- Use /search/jql endpoint (default: true). Set to false for /search
       limit = 500,                                -- Global limit of tasks per view
     },
   },
@@ -63,6 +64,7 @@ require('jira').setup({
     email = "your-email@example.com",           -- Your Jira email (required for basic auth)
     token = "your-api-token",                   -- Your Jira API token or bearer token
     auth_type = "basic",                        -- "basic" (default) or "bearer"
+    use_jql_post = true,                        -- Use /search/jql endpoint (default: true). Set to false for /search
     limit = 500,                                -- Global limit of tasks per view
   },
 

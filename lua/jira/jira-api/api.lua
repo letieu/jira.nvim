@@ -123,7 +123,11 @@ local function curl_request(method, endpoint, data, callback)
 
       if code ~= 0 then
         if callback then
-          callback(nil, "Curl failed: " .. table.concat(stderr, "\n"))
+          local error_msg = table.concat(stderr, "\n")
+          if error_msg == "" then
+            error_msg = "Curl failed with exit code " .. code
+          end
+          callback(nil, "Curl failed: " .. error_msg)
         end
         return
       end
@@ -178,14 +182,57 @@ function M.search_issues(jql, page_token, max_results, fields, callback, project
       story_point_field,
     }
 
-  local data = {
-    jql = jql,
-    fields = fields,
-    nextPageToken = page_token or "",
-    maxResults = max_results or 100,
-  }
+  local env = config.options.jira
+  local use_jql_post = env.use_jql_post ~= false -- default to true
 
-  curl_request("POST", "/rest/api/3/search/jql", data, callback)
+  if use_jql_post then
+    -- Use POST /search/jql endpoint (newer API)
+    local data = {
+      jql = jql,
+      fields = fields,
+      nextPageToken = page_token or "",
+      maxResults = max_results or 100,
+    }
+    curl_request("POST", "/rest/api/3/search/jql", data, callback)
+  else
+    -- Use standard POST /search endpoint
+    local start_at = 0
+    if page_token and page_token ~= "" then
+      start_at = tonumber(page_token) or 0
+    end
+    
+    local data = {
+      jql = jql,
+      fields = fields,
+      startAt = start_at,
+      maxResults = max_results or 100,
+    }
+    
+    curl_request("POST", "/rest/api/3/search", data, function(result, err)
+      if err then
+        if callback then callback(nil, err) end
+        return
+      end
+      
+      -- Convert standard search response to match /search/jql format
+      if result and result.issues then
+        local converted = {
+          issues = result.issues,
+          total = result.total,
+        }
+        
+        -- Add nextPageToken if there are more results
+        local next_start = result.startAt + #result.issues
+        if next_start < result.total then
+          converted.nextPageToken = tostring(next_start)
+        end
+        
+        if callback then callback(converted, nil) end
+      else
+        if callback then callback(result, nil) end
+      end
+    end)
+  end
 end
 
 -- Get available transitions for an issue
