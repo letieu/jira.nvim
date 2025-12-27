@@ -104,20 +104,20 @@ local function setup_keymaps()
     render.render_content()
   end, opts)
 
-  vim.keymap.set("n", "D", function()
-    state.active_tab = "description"
-    render.render_content()
-  end, opts)
-
-  vim.keymap.set("n", "C", function()
-    state.active_tab = "comments"
-    render.render_content()
-  end, opts)
-
-  vim.keymap.set("n", "H", function()
-    state.active_tab = "help"
-    render.render_content()
-  end, opts)
+  local tabs = require("jira.common.tabs")
+  tabs.setup_tab_keymaps({
+    tabs = {
+      { key = "1", id = "description" },
+      { key = "2", id = "comments" },
+      { key = "3", id = "help" },
+    },
+    state = state,
+    on_switch = function(tab_id)
+      state.active_tab = tab_id
+      render.render_content()
+    end,
+    buffer = state.buf,
+  })
 
   -- Add Comment / Edit Description
   vim.keymap.set("n", "i", function()

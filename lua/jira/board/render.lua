@@ -268,19 +268,27 @@ end
 
 local function render_header(view)
   local tabs = {
-    { name = "Active Sprint", key = "S" },
-    { name = "JQL", key = "J" },
-    { name = "Help", key = "H" },
+    { name = "Active Sprint", key = "1" },
+    { name = "JQL", key = "2" },
+    { name = "Help", key = "3" },
   }
 
   local header = "  "
   local hls = {}
+  local tab_ranges = {} -- Store tab click ranges
 
-  for _, tab in ipairs(tabs) do
+  for i, tab in ipairs(tabs) do
     local is_active = (view == tab.name)
     local tab_str = (" %s (%s) "):format(tab.name, tab.key)
     local start_col = #header
     header = header .. tab_str .. "  "
+
+    -- Store tab range for click handling
+    table.insert(tab_ranges, {
+      start_col = start_col,
+      end_col = start_col + #tab_str,
+      view_name = tab.name,
+    })
 
     table.insert(hls, {
       row = 0,
@@ -289,6 +297,9 @@ local function render_header(view)
       hl = is_active and "JiraTabActive" or "JiraTabInactive",
     })
   end
+
+  -- Store tab ranges in state for click handling
+  state.tab_ranges = tab_ranges
 
   local header_lines = { header, "" }
 
@@ -396,7 +407,7 @@ function M.render_help(view)
     { section = "Navigation & View" },
     { k = "<CR>", d = "Open Issue / Toggle Node" },
     { k = "<Tab>", d = "Toggle Node (Expand/Collapse)" },
-    { k = "S, J, H", d = "Switch View (Sprint, JQL, Help)" },
+    { k = "1, 2, 3", d = "Switch View (Sprint, JQL, Help)" },
     { k = "q", d = "Close Board" },
     { k = "r", d = "Refresh current view" },
 

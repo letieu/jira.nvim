@@ -7,19 +7,27 @@ local M = {}
 
 function M.render_header()
   local tabs = {
-    { name = "Description", key = "D", id = "description" },
-    { name = "Comments", key = "C", id = "comments" },
-    { name = "Help", key = "H", id = "help" },
+    { name = "Description", key = "1", id = "description" },
+    { name = "Comments", key = "2", id = "comments" },
+    { name = "Help", key = "3", id = "help" },
   }
 
   local header = "  "
   local hls = {}
+  local tab_ranges = {} -- Store tab click ranges
 
   for _, tab in ipairs(tabs) do
     local is_active = (state.active_tab == tab.id)
     local tab_str = (" %s (%s) "):format(tab.name, tab.key)
     local start_col = header:len()
     header = header .. tab_str .. "  "
+
+    -- Store tab range for click handling
+    table.insert(tab_ranges, {
+      start_col = start_col,
+      end_col = start_col + #tab_str,
+      tab_id = tab.id,
+    })
 
     table.insert(hls, {
       row = 0,
@@ -28,6 +36,9 @@ function M.render_header()
       hl = is_active and "JiraTabActive" or "JiraTabInactive",
     })
   end
+
+  -- Store tab ranges in state for click handling
+  state.tab_ranges = tab_ranges
 
   local lines = { header, "" }
 
