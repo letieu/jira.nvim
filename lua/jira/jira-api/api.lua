@@ -527,5 +527,27 @@ function M.get_create_meta(project_key, callback)
   end)
 end
 
+-- Get boards for a project (Agile API)
+function M.get_boards(project_key, callback)
+  local endpoint = "/rest/agile/1.0/board?projectKeyOrId=" .. project_key
+  curl_request("GET", endpoint, nil, callback)
+end
+
+-- Get active sprints for a board (Agile API)
+function M.get_active_sprints(board_id, callback)
+  local endpoint = "/rest/agile/1.0/board/" .. board_id .. "/sprint?state=active"
+  curl_request("GET", endpoint, nil, callback)
+end
+
+-- Get issues in a sprint (Agile API)
+function M.get_sprint_issues(sprint_id, start_at, max_results, callback)
+  local endpoint = ("/rest/agile/1.0/sprint/%s/issue?startAt=%d&maxResults=%d"):format(
+    sprint_id,
+    start_at or 0,
+    max_results or 100
+  )
+  curl_request("GET", endpoint, nil, callback)
+end
+
 return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

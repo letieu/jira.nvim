@@ -121,9 +121,103 @@ function M.get_active_sprint_issues(project, callback)
     return
   end
 
-  local jql = ("project = '%s' AND sprint in openSprints() ORDER BY Rank ASC"):format(project)
+  -- First, get the board for the project
+  api.get_boards(project, function(board_result, err)
+    if err then
+      if callback and vim.is_callable(callback) then
+        callback(nil, "Failed to get boards: " .. err)
+      end
+      return
+    end
 
-  fetch_issues_recursive(project, jql, callback)
+    if not board_result or not board_result.values or #board_result.values == 0 then
+      if callback and vim.is_callable(callback) then
+        callback(nil, "No boards found for project " .. project)
+      end
+      return
+    end
+
+    local board_id = board_result.values[1].id
+
+    -- Get active sprints for the board
+    api.get_active_sprints(board_id, function(sprint_result, err)
+      if err then
+        if callback and vim.is_callable(callback) then
+          callback(nil, "Failed to get active sprints: " .. err)
+        end
+        return
+      end
+
+      if not sprint_result or not sprint_result.values or #sprint_result.values == 0 then
+        if callback and vim.is_callable(callback) then
+          callback({}, nil) -- No active sprint, return empty
+        end
+        return
+      end
+
+      local sprint_id = sprint_result.values[1].id
+      local story_point_field = config.get_project_config(project).story_point_field
+      local all_issues = {}
+
+      -- Fetch all issues from the sprint with pagination
+      local function fetch_sprint_issues(start_at)
+        api.get_sprint_issues(sprint_id, start_at, 100, function(issues_result, err)
+          if err then
+            if callback and vim.is_callable(callback) then
+              callback(nil, "Failed to get sprint issues: " .. err)
+            end
+            return
+          end
+
+          if not issues_result or not issues_result.issues then
+            if callback and vim.is_callable(callback) then
+              callback(all_issues, nil)
+            end
+            return
+          end
+
+          -- Process issues
+          for _, issue in ipairs(issues_result.issues) do
+            local fields = issue.fields
+            local status = safe_get(fields, "status", "name") or "Unknown"
+            local parent_key = safe_get(fields, "parent", "key")
+            local priority = safe_get(fields, "priority", "name") or "None"
+            local assignee = safe_get(fields, "assignee", "displayName") or "Unassigned"
+            local issue_type = safe_get(fields, "issuetype", "name") or "Task"
+            local time_spent = is_valid(fields.timespent) and fields.timespent or nil
+            local time_estimate = is_valid(fields.timeoriginalestimate) and fields.timeoriginalestimate or nil
+            local story_points = safe_get(fields, story_point_field)
+
+            table.insert(all_issues, {
+              key = issue.key,
+              summary = fields.summary or "",
+              status = status,
+              parent = parent_key,
+              priority = priority,
+              assignee = assignee,
+              time_spent = time_spent,
+              time_estimate = time_estimate,
+              type = issue_type,
+              story_points = story_points,
+            })
+          end
+
+          -- Check if there are more issues
+          local total = issues_result.total or 0
+          local next_start = start_at + #issues_result.issues
+          if next_start < total and #all_issues < (config.options.jira.limit or 200) then
+            fetch_sprint_issues(next_start)
+          else
+            if callback and vim.is_callable(callback) then
+              callback(all_issues, nil)
+            end
+          end
+        end)
+      end
+
+      fetch_sprint_issues(0)
+    end)
+  end)
 end
 
 -- Get backlog issues
