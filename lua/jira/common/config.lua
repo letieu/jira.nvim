@@ -13,6 +13,7 @@ local FALLBACKS = {
 ---@field email? string Your Jira email (required if auth_type is "basic")
 ---@field token string Your Jira API token or bearer token
 ---@field auth_type? "basic"|"bearer" Authentication type (default: "basic")
+---@field api_version? "2"|"3" Jira API version to use (default: "3")
 ---@field use_jql_post? boolean Use POST /search/jql endpoint instead of POST /search (default: true)
 ---@field resolve_current_user? boolean Replace currentUser() with accountId in JQL (default: false)
 ---@field debug? boolean Enable debug logging for API calls (default: false)
@@ -28,6 +29,7 @@ M.defaults = {
     email = "",
     token = "",
     auth_type = "basic",
+    api_version = "3",
     use_jql_post = true,
     resolve_current_user = false,
     debug = false,

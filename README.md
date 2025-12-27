@@ -45,6 +45,7 @@ A Neovim plugin for managing JIRA tasks with a beautiful UI.
       email = "your-email@example.com",           -- Your Jira email (required for basic auth)
       token = "your-api-token",                   -- Your Jira API token or bearer token
       auth_type = "basic",                        -- "basic" (default) or "bearer"
+      api_version = "3",                          -- Jira API version: "2" or "3" (default: "3")
       use_jql_post = true,                        -- Use /search/jql endpoint (default: true). Set to false for /search
       resolve_current_user = false,               -- Replace currentUser() with accountId in JQL (default: false)
       debug = false,                              -- Enable debug logging for API calls (default: false)
@@ -66,6 +67,7 @@ require('jira').setup({
     email = "your-email@example.com",           -- Your Jira email (required for basic auth)
     token = "your-api-token",                   -- Your Jira API token or bearer token
     auth_type = "basic",                        -- "basic" (default) or "bearer"
+    api_version = "3",                          -- Jira API version: "2" or "3" (default: "3")
     use_jql_post = true,                        -- Use /search/jql endpoint (default: true). Set to false for /search
     resolve_current_user = false,               -- Replace currentUser() with accountId in JQL (default: false)
     debug = false,                              -- Enable debug logging for API calls (default: false)
