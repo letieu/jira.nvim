@@ -88,6 +88,15 @@ local function setup_keymaps()
     end
   end, opts)
 
+  vim.keymap.set("n", "<Esc>", function()
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+      vim.api.nvim_win_close(state.win, true)
+      if state.prev_win and vim.api.nvim_win_is_valid(state.prev_win) then
+        vim.api.nvim_set_current_win(state.prev_win)
+      end
+    end
+  end, opts)
+
   -- Switch Tabs
   vim.keymap.set("n", "<Tab>", function()
     local next_tab = { description = "comments", comments = "help", help = "description" }
@@ -242,6 +251,10 @@ function M.open(issue_key, initial_tab)
 
         state.buf = buf
         state.win = win
+
+        -- Set window options
+        vim.api.nvim_set_option_value("wrap", true, { win = win })
+        vim.api.nvim_set_option_value("linebreak", true, { win = win })
 
         render.render_content()
         setup_keymaps()
