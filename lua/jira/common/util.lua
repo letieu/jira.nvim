@@ -167,11 +167,15 @@ local function parse_adf(node)
   return joined
 end
 
----@param adf? table
+---@param adf? table|string
 ---@return string
 function M.adf_to_markdown(adf)
   if not adf or adf == vim.NIL then
     return ""
+  end
+  -- API v2 returns plain strings, API v3 returns ADF objects
+  if type(adf) == "string" then
+    return adf
   end
   return parse_adf(adf)
 end
