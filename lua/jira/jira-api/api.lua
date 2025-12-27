@@ -14,6 +14,15 @@ local function get_env()
   return config.options.jira
 end
 
+-- Build API path with correct version
+---@param path string The API path without version (e.g. "/issue/KEY-123")
+---@return string The full path with version (e.g. "/rest/api/3/issue/KEY-123")
+local function api_path(path)
+  local env = get_env()
+  local version = env.api_version or "3"
+  return "/rest/api/" .. version .. path
+end
+
 -- Validate environment variables
 ---@return boolean valid
 local function validate_env()
@@ -254,7 +263,7 @@ function M.search_issues(jql, page_token, max_results, fields, callback, project
       nextPageToken = page_token or "",
       maxResults = max_results or 100,
     }
-    curl_request("POST", "/rest/api/3/search/jql", data, callback)
+    curl_request("POST", api_path("/search/jql"), data, callback)
   else
     -- Use standard POST /search endpoint
     local start_at = 0
@@ -269,7 +278,7 @@ function M.search_issues(jql, page_token, max_results, fields, callback, project
       maxResults = max_results or 100,
     }
     
-    curl_request("POST", "/rest/api/3/search", data, function(result, err)
+    curl_request("POST", api_path("/search"), data, function(result, err)
       if err then
         if callback then callback(nil, err) end
         return
@@ -298,7 +307,7 @@ end
 
 -- Get available transitions for an issue
 function M.get_transitions(issue_key, callback)
-  curl_request("GET", "/rest/api/3/issue/" .. issue_key .. "/transitions", nil, function(result, err)
+  curl_request("GET", api_path("/issue/" .. issue_key .. "/transitions"), nil, function(result, err)
     local is_fun = (callback and vim.is_callable(callback))
     if err then
       if callback and is_fun then
@@ -317,7 +326,7 @@ end
 ---@param callback? fun(cond?: boolean, err?: string)
 function M.transition_issue(issue_key, transition_id, callback)
   local data = { transition = { id = transition_id } }
-  curl_request("POST", "/rest/api/3/issue/" .. issue_key .. "/transitions", data, function(_, err)
+  curl_request("POST", api_path("/issue/" .. issue_key .. "/transitions"), data, function(_, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, err)
@@ -362,7 +371,7 @@ function M.add_worklog(issue_key, time_spent, comment, callback)
     }
   end
 
-  curl_request("POST", "/rest/api/3/issue/" .. issue_key .. "/worklog", data, function(_, err)
+  curl_request("POST", api_path("/issue/" .. issue_key .. "/worklog"), data, function(_, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, err)
@@ -382,7 +391,7 @@ function M.assign_issue(issue_key, account_id, callback)
     accountId = account_id,
   }
 
-  curl_request("PUT", "/rest/api/3/issue/" .. issue_key .. "/assignee", data, function(_, err)
+  curl_request("PUT", api_path("/issue/" .. issue_key .. "/assignee"), data, function(_, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, err)
@@ -397,24 +406,24 @@ end
 
 -- Get current user details
 function M.get_myself(callback)
-  curl_request("GET", "/rest/api/3/myself", nil, callback)
+  curl_request("GET", api_path("/myself"), nil, callback)
 end
 
 -- Get issue details
 ---@param issue_key string
 ---@param callback function
 function M.get_issue(issue_key, callback)
-  curl_request("GET", "/rest/api/3/issue/" .. issue_key, nil, callback)
+  curl_request("GET", api_path("/issue/" .. issue_key), nil, callback)
 end
 
 -- Get statuses for a project
 function M.get_project_statuses(project, callback)
-  curl_request("GET", "/rest/api/3/project/" .. project .. "/statuses", nil, callback)
+  curl_request("GET", api_path("/project/" .. project .. "/statuses"), nil, callback)
 end
 
 -- Get comments for an issue
 function M.get_comments(issue_key, callback)
-  curl_request("GET", "/rest/api/3/issue/" .. issue_key .. "/comment", nil, function(result, err)
+  curl_request("GET", api_path("/issue/" .. issue_key .. "/comment"), nil, function(result, err)
     if err then
       if callback then
         callback(nil, err)
@@ -440,7 +449,7 @@ function M.add_comment(issue_key, comment, callback)
     body = body,
   }
 
-  curl_request("POST", "/rest/api/3/issue/" .. issue_key .. "/comment", data, function(_, err)
+  curl_request("POST", api_path("/issue/" .. issue_key .. "/comment"), data, function(_, err)
     if err then
       if callback then
         callback(nil, err)
@@ -466,7 +475,7 @@ function M.edit_comment(issue_key, comment_id, comment, callback)
     body = body,
   }
 
-  curl_request("PUT", "/rest/api/3/issue/" .. issue_key .. "/comment/" .. comment_id, data, function(_, err)
+  curl_request("PUT", api_path("/issue/" .. issue_key .. "/comment/" .. comment_id), data, function(_, err)
     if err then
       if callback then
         callback(nil, err)
