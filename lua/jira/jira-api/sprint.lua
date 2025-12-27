@@ -46,6 +46,10 @@ local function fetch_page(page_token, project, all_issues, story_point_field, jq
     end
 
     for _, issue in ipairs(result.issues) do
+      if not issue or not issue.key then
+        goto continue
+      end
+
       local fields = issue.fields
 
       local status = safe_get(fields, "status", "name") or "Unknown"
@@ -79,6 +83,8 @@ local function fetch_page(page_token, project, all_issues, story_point_field, jq
         type = issue_type,
         story_points = story_points,
       })
+
+      ::continue::
     end
 
     if not result.nextPageToken or #all_issues >= limit then
@@ -190,6 +196,10 @@ function M.get_active_sprint_issues(project, callback)
 
           -- Process issues
           for _, issue in ipairs(issues_result.issues) do
+            if not issue or not issue.key then
+              goto continue
+            end
+
             local fields = issue.fields
             local status = safe_get(fields, "status", "name") or "Unknown"
             local parent_key = safe_get(fields, "parent", "key")
@@ -212,6 +222,8 @@ function M.get_active_sprint_issues(project, callback)
               type = issue_type,
               story_points = story_points,
             })
+
+            ::continue::
           end
 
           -- Check if there are more issues

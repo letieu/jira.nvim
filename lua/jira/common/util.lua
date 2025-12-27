@@ -26,6 +26,10 @@ function M.build_issue_tree(issues)
   local key_to_issue = {}
 
   for _, issue in ipairs(issues) do
+    if not issue or not issue.key then
+      goto continue
+    end
+
     ---@type JiraIssueNode
     local node = vim.tbl_extend("force", issue, {
       children = {},
@@ -33,6 +37,8 @@ function M.build_issue_tree(issues)
     })
 
     key_to_issue[node.key] = node
+
+    ::continue::
   end
 
   ---@type JiraIssueNode[]
@@ -40,6 +46,10 @@ function M.build_issue_tree(issues)
 
   -- Use original list order to ensure stability
   for _, issue in ipairs(issues) do
+    if not issue or not issue.key then
+      goto continue2
+    end
+
     local node = key_to_issue[issue.key]
     -- Only process if not already processed (though key_to_issue is unique by key)
     -- We just need to check if it's a child or root
@@ -50,6 +60,8 @@ function M.build_issue_tree(issues)
         table.insert(roots, node)
       end
     end
+
+    ::continue2::
   end
 
   return roots

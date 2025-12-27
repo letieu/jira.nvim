@@ -200,7 +200,15 @@ function M.open(issue_key, initial_tab)
       return
     end
 
-    jira_api.get_comments(issue_key, function(comments, c_err)
+    if not issue or not issue.key then
+      vim.schedule(function()
+        common_ui.stop_loading()
+        vim.notify("Error: Invalid issue data received (missing key field)", vim.log.levels.ERROR)
+      end)
+      return
+    end
+
+    jira_api.get_comments(issue.key, function(comments, c_err)
       vim.schedule(function()
         common_ui.stop_loading()
         if c_err then
