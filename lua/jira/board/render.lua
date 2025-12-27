@@ -409,7 +409,7 @@ function M.render_help(view)
     { k = "<Tab>", d = "Toggle Node (Expand/Collapse)" },
     { k = "1, 2, 3", d = "Switch View (Sprint, JQL, Help)" },
     { k = "q", d = "Close Board" },
-    { k = "r", d = "Refresh current view" },
+    { k = "r", d = "Refresh view (refetch sprint)" },
 
     { section = "Issue Actions" },
     { k = "i", d = "Create Issue / Sub-task (under cursor)" },

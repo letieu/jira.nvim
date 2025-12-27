@@ -20,6 +20,12 @@ end
 function M.refresh_view()
   local cache_key = helper.get_cache_key(state.project_key, state.current_view)
   state.cache[cache_key] = nil
+  
+  -- Clear sprint cache for this project if in Active Sprint view
+  if state.current_view == "Active Sprint" and state.project_key then
+    state.sprint_cache[state.project_key] = nil
+  end
+  
   M.load_view(state.project_key, state.current_view)
 end
 
@@ -280,16 +286,7 @@ function M.load_view(project_key, view_name)
 
   common_ui.start_loading("Loading " .. view_name .. " for " .. project_key .. "...")
 
-  local fetch_fn
-  if view_name == "Active Sprint" then
-    fetch_fn = function(pk, cb)
-      sprint.get_active_sprint_issues(pk, cb)
-    end
-  elseif view_name == "JQL" then
-    fetch_fn = function(pk, cb)
-      sprint.get_issues_by_jql(pk, state.custom_jql, cb)
-    end
-  end
+    local fetch_fn\n  if view_name == \"Active Sprint\" then\n    fetch_fn = function(pk, cb)\n      -- Pass force_refresh flag from refresh_view\n      local force_refresh = not cached_issues\n      sprint.get_active_sprint_issues(pk, cb, force_refresh)\n    end\n  elseif view_name == \"JQL\" then\n    fetch_fn = function(pk, cb)\n      sprint.get_issues_by_jql(pk, state.custom_jql, cb)\n    end\n  end
 
   fetch_fn(project_key, function(issues, err)
     if err then

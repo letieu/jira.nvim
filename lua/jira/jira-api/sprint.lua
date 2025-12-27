@@ -2,6 +2,41 @@
 local api = require("jira.jira-api.api")
 local config = require("jira.common.config")
 
+-- Sprint cache with configurable TTL (default 2 weeks)
+local sprint_cache = {}
+
+-- Get sprint cache TTL from config
+local function get_cache_ttl()
+  return config.options.jira.sprint_cache_ttl or 1209600 -- 2 weeks default
+end
+
+-- Get cached sprint data for a project
+local function get_cached_sprint(project)
+  local cached = sprint_cache[project]
+  if cached and (os.time() - cached.timestamp) < get_cache_ttl() then
+    return cached
+  end
+  return nil
+end
+
+-- Save sprint data to cache
+local function cache_sprint(project, board_id, sprint_id)
+  sprint_cache[project] = {
+    board_id = board_id,
+    sprint_id = sprint_id,
+    timestamp = os.time(),
+  }
+end
+
+-- Clear sprint cache for a project
+local function clear_sprint_cache(project)
+  if project then
+    sprint_cache[project] = nil
+  else
+    sprint_cache = {}
+  end
+end
+
 -- Helper to safely check if a value is not nil/vim.NIL
 local function is_valid(value)
   return value ~= nil and type(value) ~= "userdata"
@@ -119,7 +154,8 @@ local M = {}
 -- Get current active sprint issues
 ---@param project string
 ---@param callback? fun(all_issues?: table, err?: string)
-function M.get_active_sprint_issues(project, callback)
+---@param force_refresh? boolean Force refresh sprint data
+function M.get_active_sprint_issues(project, callback, force_refresh)
   if not project then
     if callback and vim.is_callable(callback) then
       callback(nil, "Project Key is required")
@@ -127,7 +163,55 @@ function M.get_active_sprint_issues(project, callback)
     return
   end
 
-  -- Use cached board lookup for faster subsequent requests
+  -- Check sprint cache first
+  local cached_sprint = not force_refresh and get_cached_sprint(project)
+  if cached_sprint then
+    -- Use cached board_id and sprint_id directly
+    local board_id = cached_sprint.board_id
+    local sprint_id = cached_sprint.sprint_id
+    local story_point_field = config.get_project_config(project).story_point_field
+    local all_issues = {}
+    local limit = config.options.jira.limit or 200
+    local fields = "summary,status,parent,priority,assignee,timespent,timeoriginalestimate,issuetype," .. story_point_field
+
+    local function fetch_sprint_issues(start_at)
+      local page_size = math.min(100, limit - #all_issues)
+      if page_size <= 0 then
+        if callback and vim.is_callable(callback) then
+          callback(all_issues, nil)
+        end
+        return
+      end
+
+      api.get_sprint_issues(board_id, sprint_id, start_at, page_size, fields, function(result, issue_err)
+        if issue_err then
+          if callback and vim.is_callable(callback) then
+            callback(nil, "Failed to get sprint issues: " .. issue_err)
+          end
+          return
+        end
+
+        if result and result.issues then
+          for _, issue in ipairs(result.issues) do
+            table.insert(all_issues, issue)
+          end
+        end
+
+        if result and result.total and #all_issues < result.total and #all_issues < limit then
+          fetch_sprint_issues(#all_issues)
+        else
+          if callback and vim.is_callable(callback) then
+            callback(all_issues, nil)
+          end
+        end
+      end)
+    end
+
+    fetch_sprint_issues(0)
+    return
+  end
+
+  -- If not cached, fetch board and sprint info
   api.get_boards_cached(project, function(board_result, err)
     if err then
       if callback and vim.is_callable(callback) then
@@ -162,6 +246,10 @@ function M.get_active_sprint_issues(project, callback)
       end
 
       local sprint_id = sprint_result.values[1].id
+      
+      -- Cache the sprint info for faster future requests
+      cache_sprint(project, board_id, sprint_id)
+      
       local story_point_field = config.get_project_config(project).story_point_field
       local all_issues = {}
       local limit = config.options.jira.limit or 200
@@ -286,6 +374,9 @@ function M.get_issues_by_jql(project, jql, callback)
     fetch_issues_recursive(project, resolved_jql, callback)
   end)
 end
+
+-- Export cache clear function
+M.clear_sprint_cache = clear_sprint_cache
 
 return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

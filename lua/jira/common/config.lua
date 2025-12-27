@@ -18,6 +18,7 @@ local FALLBACKS = {
 ---@field resolve_current_user? boolean Replace currentUser() with accountId in JQL (default: false)
 ---@field debug? boolean Enable debug logging for API calls (default: false)
 ---@field limit? number Global limit of tasks when calling API
+---@field sprint_cache_ttl? number Sprint cache TTL in seconds (default: 1209600 = 2 weeks)
 
 ---@class JiraConfig
 ---@field jira JiraAuthOptions
@@ -34,6 +35,7 @@ M.defaults = {
     resolve_current_user = false,
     debug = false,
     limit = 200,
+    sprint_cache_ttl = 1209600, -- 2 weeks in seconds
   },
   projects = {},
   queries = {

@@ -11,6 +11,7 @@
 ---@field current_query string|nil   -- active JQL or query name
 ---@field custom_jql string|nil      -- user-defined JQL override
 ---@field cache table                -- cached API results
+---@field sprint_cache table<string, {sprint_id: number, board_id: number, timestamp: number}> -- project -> sprint mapping
 ---@field query_map table<string,string> -- named queries -> JQL
 ---@field jql_line integer|nil       -- buffer line containing editable JQL
 
@@ -28,6 +29,7 @@ local state = {
   current_query = nil,
   custom_jql = nil,
   cache = {},
+  sprint_cache = {},
   query_map = {},
   jql_line = nil,
 }
