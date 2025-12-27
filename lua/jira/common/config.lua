@@ -14,6 +14,7 @@ local FALLBACKS = {
 ---@field token string Your Jira API token or bearer token
 ---@field auth_type? "basic"|"bearer" Authentication type (default: "basic")
 ---@field use_jql_post? boolean Use POST /search/jql endpoint instead of POST /search (default: true)
+---@field resolve_current_user? boolean Replace currentUser() with accountId in JQL (default: false)
 ---@field debug? boolean Enable debug logging for API calls (default: false)
 ---@field limit? number Global limit of tasks when calling API
 
@@ -28,6 +29,7 @@ M.defaults = {
     token = "",
     auth_type = "basic",
     use_jql_post = true,
+    resolve_current_user = false,
     debug = false,
     limit = 200,
   },
