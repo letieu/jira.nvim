@@ -591,13 +591,56 @@ function M.get_active_sprints(board_id, callback)
 end
 
 -- Get issues in a sprint (Agile API)
-function M.get_sprint_issues(sprint_id, start_at, max_results, callback)
-  local endpoint = ("/rest/agile/1.0/sprint/%s/issue?startAt=%d&maxResults=%d"):format(
+function M.get_sprint_issues(sprint_id, start_at, max_results, fields, callback)
+  local field_list = fields or "summary,status,parent,priority,assignee,timespent,timeoriginalestimate,issuetype"
+  local endpoint = ("/rest/agile/1.0/sprint/%s/issue?startAt=%d&maxResults=%d&fields=%s"):format(
     sprint_id,
     start_at or 0,
-    max_results or 100
+    max_results or 100,
+    field_list
   )
   curl_request("GET", endpoint, nil, callback)
+end
+
+-- Cache for board/sprint lookups
+local board_cache = {}
+local sprint_cache = {}
+
+-- Get boards with caching
+function M.get_boards_cached(project_key, callback)
+  if board_cache[project_key] then
+    if callback then callback(board_cache[project_key], nil) end
+    return
+  end
+  
+  M.get_boards(project_key, function(result, err)
+    if not err and result then
+      board_cache[project_key] = result
+    end
+    if callback then callback(result, err) end
+  end)
+end
+
+-- Get active sprints with caching
+function M.get_active_sprints_cached(board_id, callback)
+  local cache_key = tostring(board_id)
+  local cached = sprint_cache[cache_key]
+  
+  -- Cache for 30 seconds
+  if cached and (os.time() - cached.time) < 30 then
+    if callback then callback(cached.data, nil) end
+    return
+  end
+  
+  M.get_active_sprints(board_id, function(result, err)
+    if not err and result then
+      sprint_cache[cache_key] = {
+        data = result,
+        time = os.time()
+      }
+    end
+    if callback then callback(result, err) end
+  end)
 end
 
 return M

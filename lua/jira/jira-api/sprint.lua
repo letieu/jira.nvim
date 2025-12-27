@@ -121,8 +121,8 @@ function M.get_active_sprint_issues(project, callback)
     return
   end
 
-  -- First, get the board for the project
-  api.get_boards(project, function(board_result, err)
+  -- Use cached board lookup for faster subsequent requests
+  api.get_boards_cached(project, function(board_result, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, "Failed to get boards: " .. err)
@@ -139,8 +139,8 @@ function M.get_active_sprint_issues(project, callback)
 
     local board_id = board_result.values[1].id
 
-    -- Get active sprints for the board
-    api.get_active_sprints(board_id, function(sprint_result, err)
+    -- Use cached sprint lookup for faster subsequent requests
+    api.get_active_sprints_cached(board_id, function(sprint_result, err)
       if err then
         if callback and vim.is_callable(callback) then
           callback(nil, "Failed to get active sprints: " .. err)
@@ -158,10 +158,22 @@ function M.get_active_sprint_issues(project, callback)
       local sprint_id = sprint_result.values[1].id
       local story_point_field = config.get_project_config(project).story_point_field
       local all_issues = {}
+      local limit = config.options.jira.limit or 200
 
-      -- Fetch all issues from the sprint with pagination
+      -- Build field list for API request
+      local fields = "summary,status,parent,priority,assignee,timespent,timeoriginalestimate,issuetype," .. story_point_field
+
+      -- Fetch issues with optimized pagination (larger page size)
       local function fetch_sprint_issues(start_at)
-        api.get_sprint_issues(sprint_id, start_at, 100, function(issues_result, err)
+        local page_size = math.min(100, limit - #all_issues)
+        if page_size <= 0 then
+          if callback and vim.is_callable(callback) then
+            callback(all_issues, nil)
+          end
+          return
+        end
+
+        api.get_sprint_issues(sprint_id, start_at, page_size, fields, function(issues_result, err)
           if err then
             if callback and vim.is_callable(callback) then
               callback(nil, "Failed to get sprint issues: " .. err)
@@ -205,7 +217,7 @@ function M.get_active_sprint_issues(project, callback)
           -- Check if there are more issues
           local total = issues_result.total or 0
           local next_start = start_at + #issues_result.issues
-          if next_start < total and #all_issues < (config.options.jira.limit or 200) then
+          if next_start < total and #all_issues < limit then
             fetch_sprint_issues(next_start)
           else
             if callback and vim.is_callable(callback) then
