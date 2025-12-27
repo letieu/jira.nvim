@@ -202,6 +202,69 @@ local function setup_keymaps()
       end)
     end)
   end, opts)
+
+  -- Open Attachment
+  vim.keymap.set("n", "gx", function()
+    local cursor_row = vim.api.nvim_win_get_cursor(0)[1] - 1
+    local target_url = nil
+    local target_filename = nil
+    for _, range in ipairs(state.attachment_ranges) do
+      if cursor_row >= range.start_line and cursor_row <= range.end_line then
+        target_url = range.url
+        target_filename = range.filename
+        break
+      end
+    end
+
+    if not target_url then
+      vim.notify("No attachment found at cursor", vim.log.levels.WARN)
+      return
+    end
+
+    -- Download and open attachment in Neovim
+    common_ui.start_loading("Downloading attachment...")
+    
+    local config_mod = require("jira.common.config")
+    local env = config_mod.options.jira
+    local auth_type = env.auth_type or "basic"
+    
+    local auth_header
+    if auth_type == "basic" then
+      local base64_auth = vim.fn.system("echo -n '" .. env.email .. ":" .. env.token .. "' | base64"):gsub("\n", "")
+      auth_header = "Authorization: Basic " .. base64_auth
+    else
+      auth_header = "Authorization: Bearer " .. env.token
+    end
+
+    local tmpfile = vim.fn.tempname()
+    local curl_cmd = {
+      "curl",
+      "-s",
+      "-H", auth_header,
+      "-o", tmpfile,
+      target_url
+    }
+
+    vim.fn.jobstart(curl_cmd, {
+      on_exit = function(_, exit_code)
+        vim.schedule(function()
+          common_ui.stop_loading()
+          if exit_code ~= 0 then
+            vim.notify("Failed to download attachment", vim.log.levels.ERROR)
+            return
+          end
+
+          -- Open the file in a new buffer
+          vim.cmd("edit " .. vim.fn.fnameescape(tmpfile))
+          -- Rename buffer to show actual filename
+          if target_filename then
+            vim.api.nvim_buf_set_name(0, target_filename)
+          end
+          vim.notify("Attachment opened: " .. (target_filename or "attachment"), vim.log.levels.INFO)
+        end)
+      end
+    })
+  end, opts)
 end
 
 ---@param issue_key string
