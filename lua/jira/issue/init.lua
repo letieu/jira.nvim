@@ -260,15 +260,25 @@ local function setup_keymaps()
             return
           end
 
-          -- Open the file in a new buffer
+          -- Open the file in a new floating window
           local attach_buf = vim.api.nvim_create_buf(false, true)
           vim.api.nvim_buf_set_option(attach_buf, "bufhidden", "wipe")
           vim.api.nvim_buf_set_option(attach_buf, "buflisted", false)
           
-          -- Open in a new window
-          vim.cmd("vsplit")
-          local attach_win = vim.api.nvim_get_current_win()
-          vim.api.nvim_win_set_buf(attach_win, attach_buf)
+          -- Create a centered floating window
+          local width = math.floor(vim.o.columns * 0.8)
+          local height = math.floor(vim.o.lines * 0.8)
+          local attach_win = vim.api.nvim_open_win(attach_buf, true, {
+            relative = "editor",
+            width = width,
+            height = height,
+            row = math.floor((vim.o.lines - height) / 2),
+            col = math.floor((vim.o.columns - width) / 2),
+            style = "minimal",
+            border = "rounded",
+            title = " " .. (target_filename or "Attachment") .. " ",
+            title_pos = "center",
+          })
           
           -- Load the file content
           vim.cmd("edit " .. vim.fn.fnameescape(tmpfile))
