@@ -15,6 +15,13 @@ local function refresh_comments(message)
         return
       end
       state.comments = comments
+      
+      -- Update cache with new comments
+      if state.cache[state.issue.key] then
+        state.cache[state.issue.key].comments = comments
+        state.cache[state.issue.key].timestamp = os.time()
+      end
+      
       render.render_content()
       if message then
         vim.notify(message, vim.log.levels.INFO)
@@ -95,6 +102,32 @@ local function setup_keymaps()
         vim.api.nvim_set_current_win(state.prev_win)
       end
     end
+  end, opts)
+
+  -- Refresh issue
+  vim.keymap.set("n", "R", function()
+    local issue_key = state.issue and state.issue.key
+    if not issue_key then
+      return
+    end
+    local current_tab = state.active_tab
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+      vim.api.nvim_win_close(state.win, true)
+    end
+    M.open(issue_key, current_tab, true) -- force_refresh = true
+  end, opts)
+
+  -- Fetch issue by key
+  vim.keymap.set("n", "gf", function()
+    local issue_key = state.issue and state.issue.key
+    if not issue_key then
+      return
+    end
+    local current_tab = state.active_tab
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+      vim.api.nvim_win_close(state.win, true)
+    end
+    M.open(issue_key, current_tab, true) -- force_refresh = true
   end, opts)
 
   -- Switch Tabs
@@ -187,18 +220,62 @@ local M = {}
 
 ---@param issue_key string
 ---@param initial_tab? string
-function M.open(issue_key, initial_tab)
+---@param force_refresh? boolean
+function M.open(issue_key, initial_tab, force_refresh)
   local prev_win = vim.api.nvim_get_current_win()
   util.setup_static_highlights()
-  common_ui.start_loading("Fetching task " .. issue_key .. "...")
 
   -- Reset state
-  state.issue = nil
-  state.comments = {}
   state.active_tab = initial_tab or "description"
   state.buf = nil
   state.win = nil
   state.prev_win = prev_win
+
+  -- Check cache first (cache expires after 5 minutes)
+  local cached = state.cache[issue_key]
+  local cache_valid = cached and not force_refresh and (os.time() - cached.timestamp) < 300
+
+  if cache_valid then
+    vim.schedule(function()
+      state.issue = cached.issue
+      state.comments = cached.comments or {}
+
+      -- Create UI
+      local buf = vim.api.nvim_create_buf(false, true)
+      vim.api.nvim_set_option_value("filetype", "markdown", { buf = buf })
+      vim.api.nvim_set_option_value("buftype", "nofile", { buf = buf })
+      vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
+      vim.api.nvim_buf_set_name(buf, "Jira: " .. issue_key)
+
+      local width = math.floor(vim.o.columns * 0.8)
+      local height = math.floor(vim.o.lines * 0.8)
+
+      local win = vim.api.nvim_open_win(buf, true, {
+        relative = "editor",
+        width = width,
+        height = height,
+        row = (vim.o.lines - height) / 2,
+        col = (vim.o.columns - width) / 2,
+        style = "minimal",
+        border = "rounded",
+      })
+
+      state.buf = buf
+      state.win = win
+
+      vim.api.nvim_set_option_value("wrap", true, { win = win })
+      vim.api.nvim_set_option_value("linebreak", true, { win = win })
+
+      render.render_content()
+      setup_keymaps()
+    end)
+    return
+  end
+
+  -- Fetch from API
+  common_ui.start_loading("Fetching task " .. issue_key .. "...")
+  state.issue = nil
+  state.comments = {}
 
   jira_api.get_issue(issue_key, function(issue, err)
     if err then
@@ -226,6 +303,13 @@ function M.open(issue_key, initial_tab)
 
         state.issue = issue
         state.comments = comments or {}
+
+        -- Update cache
+        state.cache[issue.key] = {
+          issue = issue,
+          comments = comments or {},
+          timestamp = os.time(),
+        }
 
         -- Create UI
         local buf = vim.api.nvim_create_buf(false, true)
@@ -292,6 +376,16 @@ function M.refresh()
       end)
     end)
   end)
+end
+
+--- Clear issue cache (all or specific issue)
+---@param issue_key? string Optional issue key. If not provided, clears all cache
+function M.clear_cache(issue_key)
+  if issue_key then
+    state.cache[issue_key] = nil
+  else
+    state.cache = {}
+  end
 end
 
 return M
