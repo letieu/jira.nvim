@@ -23,7 +23,7 @@ function M.refresh_view()
   
   -- Clear sprint cache for this project if in Active Sprint view
   if state.current_view == "Active Sprint" and state.project_key then
-    state.sprint_cache[state.project_key] = nil
+    sprint.clear_sprint_cache(state.project_key)
   end
   
   M.load_view(state.project_key, state.current_view)
@@ -289,9 +289,8 @@ function M.load_view(project_key, view_name)
   local fetch_fn
   if view_name == "Active Sprint" then
     fetch_fn = function(pk, cb)
-      -- Pass force_refresh flag from refresh_view
-      local force_refresh = not cached_issues
-      sprint.get_active_sprint_issues(pk, cb, force_refresh)
+      -- Don't force refresh sprint cache just because issues aren't cached
+      sprint.get_active_sprint_issues(pk, cb, false)
     end
   elseif view_name == "JQL" then
     fetch_fn = function(pk, cb)
