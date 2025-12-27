@@ -77,6 +77,7 @@ function M.render_content()
   local lines = {}
   local hls = {}
   state.comment_ranges = {}
+  state.attachment_ranges = {}
 
   local fields = state.issue.fields or {}
 
@@ -100,6 +101,26 @@ function M.render_content()
       end
     else
       table.insert(lines, "_No description_")
+    end
+
+    -- Show attachments
+    if fields.attachment and #fields.attachment > 0 then
+      table.insert(lines, "")
+      table.insert(lines, "## Attachments")
+      table.insert(lines, "")
+      for _, att in ipairs(fields.attachment) do
+        local size_kb = math.floor((att.size or 0) / 1024)
+        local mime = att.mimeType or "unknown"
+        local att_line = start_row + #lines
+        table.insert(lines, string.format("📎 %s (%d KB, %s)", att.filename, size_kb, mime))
+        table.insert(lines, string.format("   %s", att.content))
+        table.insert(state.attachment_ranges, {
+          url = att.content,
+          filename = att.filename,
+          start_line = att_line,
+          end_line = start_row + #lines - 1,
+        })
+      end
     end
 
     local p_config = config.get_project_config(state.issue.fields.project.key)
@@ -167,6 +188,23 @@ function M.render_content()
           end
         end
 
+        -- Show attachments for this comment
+        if comment.attachments and #comment.attachments > 0 then
+          table.insert(lines, "")
+          for _, att in ipairs(comment.attachments) do
+            local size_kb = math.floor((att.size or 0) / 1024)
+            local att_line = start_row + #lines
+            table.insert(lines, string.format("  📎 %s (%d KB)", att.filename, size_kb))
+            table.insert(lines, string.format("     %s", att.content))
+            table.insert(state.attachment_ranges, {
+              url = att.content,
+              filename = att.filename,
+              start_line = att_line,
+              end_line = start_row + #lines - 1,
+            })
+          end
+        end
+
         table.insert(state.comment_ranges, {
           id = comment.id,
           start_line = comment_start_line,
@@ -186,6 +224,7 @@ function M.render_content()
       { k = "r", d = "Refetch Issue (go to Description)" },
       { k = "i", d = "Add Comment (in Comments tab)" },
       { k = "E", d = "Edit Comment (in Comments tab)" },
+      { k = "gx", d = "Open Attachment in Neovim" },
     }
 
     for _, item in ipairs(help_content) do
