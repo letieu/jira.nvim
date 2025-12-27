@@ -4,6 +4,35 @@ local config = require("jira.common.config")
 
 -- Sprint cache with configurable TTL (default 2 weeks)
 local sprint_cache = {}
+local cache_file = vim.fn.stdpath("data") .. "/jira_sprint_cache.json"
+
+-- Load cache from file on startup
+local function load_cache_from_file()
+  local f = io.open(cache_file, "r")
+  if f then
+    local content = f:read("*all")
+    f:close()
+    local ok, data = pcall(vim.json.decode, content)
+    if ok and type(data) == "table" then
+      sprint_cache = data
+    end
+  end
+end
+
+-- Save cache to file
+local function save_cache_to_file()
+  local ok, json = pcall(vim.json.encode, sprint_cache)
+  if ok then
+    local f = io.open(cache_file, "w")
+    if f then
+      f:write(json)
+      f:close()
+    end
+  end
+end
+
+-- Initialize cache from file
+load_cache_from_file()
 
 -- Get sprint cache TTL from config
 local function get_cache_ttl()
@@ -26,6 +55,7 @@ local function cache_sprint(project, board_id, sprint_id)
     sprint_id = sprint_id,
     timestamp = os.time(),
   }
+  save_cache_to_file()
 end
 
 -- Clear sprint cache for a project
@@ -35,6 +65,7 @@ local function clear_sprint_cache(project)
   else
     sprint_cache = {}
   end
+  save_cache_to_file()
 end
 
 -- Helper to safely check if a value is not nil/vim.NIL
