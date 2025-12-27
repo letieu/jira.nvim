@@ -236,7 +236,13 @@ local function setup_keymaps()
       auth_header = "Authorization: Bearer " .. env.token
     end
 
-    local tmpfile = vim.fn.tempname()
+    -- Determine file extension for proper handling
+    local extension = target_filename and target_filename:match("%.([^%.]+)$") or ""
+    local is_image = extension:lower():match("^(png|jpg|jpeg|gif|bmp|webp|svg)$")
+    
+    -- For images, save with proper extension for image.nvim detection
+    local tmpfile = is_image and (vim.fn.tempname() .. "." .. extension) or vim.fn.tempname()
+    
     local curl_cmd = {
       "curl",
       "-s",
@@ -255,12 +261,48 @@ local function setup_keymaps()
           end
 
           -- Open the file in a new buffer
+          local attach_buf = vim.api.nvim_create_buf(false, true)
+          vim.api.nvim_buf_set_option(attach_buf, "bufhidden", "wipe")
+          vim.api.nvim_buf_set_option(attach_buf, "buflisted", false)
+          
+          -- Open in a new window
+          vim.cmd("vsplit")
+          local attach_win = vim.api.nvim_get_current_win()
+          vim.api.nvim_win_set_buf(attach_win, attach_buf)
+          
+          -- Load the file content
           vim.cmd("edit " .. vim.fn.fnameescape(tmpfile))
+          
           -- Rename buffer to show actual filename
           if target_filename then
             vim.api.nvim_buf_set_name(0, target_filename)
           end
-          vim.notify("Attachment opened: " .. (target_filename or "attachment"), vim.log.levels.INFO)
+          
+          -- Set up keymap to close the attachment viewer
+          vim.keymap.set("n", "q", function()
+            if vim.api.nvim_win_is_valid(attach_win) then
+              vim.api.nvim_win_close(attach_win, true)
+            end
+          end, { buffer = attach_buf, noremap = true, silent = true })
+          
+          vim.keymap.set("n", "<Esc>", function()
+            if vim.api.nvim_win_is_valid(attach_win) then
+              vim.api.nvim_win_close(attach_win, true)
+            end
+          end, { buffer = attach_buf, noremap = true, silent = true })
+          
+          -- For images, try to use image.nvim if available
+          if is_image then
+            local ok, image = pcall(require, "image")
+            if ok then
+              -- image.nvim will automatically detect and render the image
+              vim.notify("Image opened: " .. (target_filename or "attachment"), vim.log.levels.INFO)
+            else
+              vim.notify("Attachment opened: " .. (target_filename or "attachment") .. " (install 3rd/image.nvim for image preview)", vim.log.levels.INFO)
+            end
+          else
+            vim.notify("Attachment opened: " .. (target_filename or "attachment"), vim.log.levels.INFO)
+          end
         end)
       end
     })
