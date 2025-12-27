@@ -293,12 +293,24 @@ local function setup_keymaps()
             if vim.api.nvim_win_is_valid(attach_win) then
               vim.api.nvim_win_close(attach_win, true)
             end
+            -- Explicitly delete the buffer to clean up
+            if vim.api.nvim_buf_is_valid(attach_buf) then
+              vim.api.nvim_buf_delete(attach_buf, { force = true })
+            end
+            -- Clean up the temp file
+            vim.fn.delete(tmpfile)
           end, { buffer = attach_buf, noremap = true, silent = true })
           
           vim.keymap.set("n", "<Esc>", function()
             if vim.api.nvim_win_is_valid(attach_win) then
               vim.api.nvim_win_close(attach_win, true)
             end
+            -- Explicitly delete the buffer to clean up
+            if vim.api.nvim_buf_is_valid(attach_buf) then
+              vim.api.nvim_buf_delete(attach_buf, { force = true })
+            end
+            -- Clean up the temp file
+            vim.fn.delete(tmpfile)
           end, { buffer = attach_buf, noremap = true, silent = true })
           
           -- For images, try to use image.nvim if available
