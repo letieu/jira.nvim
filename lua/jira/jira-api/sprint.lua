@@ -197,8 +197,7 @@ function M.get_active_sprint_issues(project, callback, force_refresh)
   -- Check sprint cache first
   local cached_sprint = not force_refresh and get_cached_sprint(project)
   if cached_sprint then
-    -- Use cached board_id and sprint_id directly
-    local board_id = cached_sprint.board_id
+    -- Use cached sprint_id directly (board_id not needed for get_sprint_issues)
     local sprint_id = cached_sprint.sprint_id
     local story_point_field = config.get_project_config(project).story_point_field
     local all_issues = {}
@@ -214,7 +213,7 @@ function M.get_active_sprint_issues(project, callback, force_refresh)
         return
       end
 
-      api.get_sprint_issues(board_id, sprint_id, start_at, page_size, fields, function(result, issue_err)
+      api.get_sprint_issues(sprint_id, start_at, page_size, fields, function(result, issue_err)
         if issue_err then
           if callback and vim.is_callable(callback) then
             callback(nil, "Failed to get sprint issues: " .. issue_err)
@@ -223,8 +222,36 @@ function M.get_active_sprint_issues(project, callback, force_refresh)
         end
 
         if result and result.issues then
+          -- Process issues into simplified structure
           for _, issue in ipairs(result.issues) do
-            table.insert(all_issues, issue)
+            if not issue or not issue.key then
+              goto continue
+            end
+
+            local issue_fields = issue.fields
+            local status = safe_get(issue_fields, "status", "name") or "Unknown"
+            local parent_key = safe_get(issue_fields, "parent", "key")
+            local priority = safe_get(issue_fields, "priority", "name") or "None"
+            local assignee = safe_get(issue_fields, "assignee", "displayName") or "Unassigned"
+            local issue_type = safe_get(issue_fields, "issuetype", "name") or "Task"
+            local time_spent = is_valid(issue_fields.timespent) and issue_fields.timespent or nil
+            local time_estimate = is_valid(issue_fields.timeoriginalestimate) and issue_fields.timeoriginalestimate or nil
+            local story_points = safe_get(issue_fields, story_point_field)
+
+            table.insert(all_issues, {
+              key = issue.key,
+              summary = issue_fields.summary or "",
+              status = status,
+              parent = parent_key,
+              priority = priority,
+              assignee = assignee,
+              time_spent = time_spent,
+              time_estimate = time_estimate,
+              type = issue_type,
+              story_points = story_points,
+            })
+
+            ::continue::
           end
         end
 
