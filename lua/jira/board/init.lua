@@ -144,18 +144,31 @@ function M.setup_keymaps()
   end, opts)
 
   -- View switching
-  vim.keymap.set("n", "S", function()
-    require("jira.board").load_view(state.project_key, "Active Sprint")
-  end, opts)
-  vim.keymap.set("n", "J", function()
+  local tabs = require("jira.common.tabs")
+  tabs.setup_tab_keymaps({
+    tabs = {
+      { key = "1", id = "Active Sprint" },
+      { key = "2", id = "JQL" },
+      { key = "3", id = "Help" },
+    },
+    state = state,
+    on_switch = function(view_name)
+      if view_name == "JQL" and state.current_view == "JQL" then
+        require("jira.board").cycle_jql_query()
+      else
+        require("jira.board").load_view(state.project_key, view_name)
+      end
+    end,
+    buffer = state.buf,
+  })
+  
+  -- Special handling for key 2 to cycle JQL
+  vim.keymap.set("n", "2", function()
     if state.current_view == "JQL" then
       require("jira.board").cycle_jql_query()
     else
       require("jira.board").load_view(state.project_key, "JQL")
     end
-  end, opts)
-  vim.keymap.set("n", "H", function()
-    require("jira.board").load_view(state.project_key, "Help")
   end, opts)
 
   -- Issue Actions
