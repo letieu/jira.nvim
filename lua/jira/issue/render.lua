@@ -183,10 +183,9 @@ function M.render_content()
       { k = "q", d = "Close Window" },
 
       { section = "Actions" },
-      { k = "R", d = "Refresh issue (clear cache)" },
-      { k = "gf", d = "Refetch current issue (bypass cache)" },
+      { k = "r", d = "Refetch Issue (go to Description)" },
       { k = "i", d = "Add Comment (in Comments tab)" },
-      { k = "r", d = "Edit Comment (in Comments tab)" },
+      { k = "E", d = "Edit Comment (in Comments tab)" },
     }
 
     for _, item in ipairs(help_content) do

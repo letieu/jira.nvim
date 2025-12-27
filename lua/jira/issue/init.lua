@@ -104,30 +104,51 @@ local function setup_keymaps()
     end
   end, opts)
 
-  -- Refresh issue
-  vim.keymap.set("n", "R", function()
+  -- Refetch issue (always goes to description tab)
+  vim.keymap.set("n", "r", function()
     local issue_key = state.issue and state.issue.key
     if not issue_key then
       return
     end
-    local current_tab = state.active_tab
     if state.win and vim.api.nvim_win_is_valid(state.win) then
       vim.api.nvim_win_close(state.win, true)
     end
-    M.open(issue_key, current_tab, true) -- force_refresh = true
+    M.open(issue_key, "description", true) -- force_refresh = true, go to description
   end, opts)
 
-  -- Fetch issue by key
-  vim.keymap.set("n", "gf", function()
-    local issue_key = state.issue and state.issue.key
-    if not issue_key then
+  -- Edit Comment
+  vim.keymap.set("n", "E", function()
+    if state.active_tab ~= "comments" then
       return
     end
-    local current_tab = state.active_tab
-    if state.win and vim.api.nvim_win_is_valid(state.win) then
-      vim.api.nvim_win_close(state.win, true)
+
+    local cursor_row = vim.api.nvim_win_get_cursor(0)[1] - 1
+    local target_comment = nil
+    for _, range in ipairs(state.comment_ranges) do
+      if cursor_row >= range.start_line and cursor_row <= range.end_line then
+        target_comment = range.comment
+        break
+      end
     end
-    M.open(issue_key, current_tab, true) -- force_refresh = true
+
+    if not target_comment then
+      return
+    end
+
+    local current_md = util.adf_to_markdown(target_comment.body)
+    create_comment_window(" Edit Comment (Press <C-s> to submit, <Esc> to cancel) ", current_md, function(input)
+      common_ui.start_loading("Updating comment...")
+      jira_api.edit_comment(state.issue.key, target_comment.id, input, function(_, err)
+        vim.schedule(function()
+          common_ui.stop_loading()
+          if err then
+            vim.notify("Error updating comment: " .. err, vim.log.levels.ERROR)
+            return
+          end
+          refresh_comments("Comment updated.")
+        end)
+      end)
+    end)
   end, opts)
 
   -- Switch Tabs
@@ -169,41 +190,6 @@ local function setup_keymaps()
             return
           end
           refresh_comments("Comment added.")
-        end)
-      end)
-    end)
-  end, opts)
-
-  -- Edit Comment
-  vim.keymap.set("n", "r", function()
-    if state.active_tab ~= "comments" then
-      return
-    end
-
-    local cursor_row = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local target_comment = nil
-    for _, range in ipairs(state.comment_ranges) do
-      if cursor_row >= range.start_line and cursor_row <= range.end_line then
-        target_comment = range.comment
-        break
-      end
-    end
-
-    if not target_comment then
-      return
-    end
-
-    local current_md = util.adf_to_markdown(target_comment.body)
-    create_comment_window(" Edit Comment (Press <C-s> to submit, <Esc> to cancel) ", current_md, function(input)
-      common_ui.start_loading("Updating comment...")
-      jira_api.edit_comment(state.issue.key, target_comment.id, input, function(_, err)
-        vim.schedule(function()
-          common_ui.stop_loading()
-          if err then
-            vim.notify("Error updating comment: " .. err, vim.log.levels.ERROR)
-            return
-          end
-          refresh_comments("Comment updated.")
         end)
       end)
     end)
