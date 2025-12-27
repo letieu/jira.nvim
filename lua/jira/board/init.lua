@@ -60,6 +60,20 @@ function M.handle_cr()
     end
   end
 
+  -- Try to open issue if on an issue line
+  local node = helper.get_node_at_cursor()
+  if node and node.key then
+    -- If node has children and is collapsed, expand it
+    if node.children and #node.children > 0 and not node.expanded then
+      M.toggle_node()
+      return
+    end
+    
+    -- Otherwise open the issue
+    require("jira.issue").open(node.key)
+    return
+  end
+
   -- Fallback to toggle node if it's an issue line
   M.toggle_node()
 end
