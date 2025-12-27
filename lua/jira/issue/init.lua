@@ -4,6 +4,9 @@ local jira_api = require("jira.jira-api.api")
 local common_ui = require("jira.common.ui")
 local util = require("jira.common.util")
 
+---@class Jira.Issue
+local M = {}
+
 -- Helper to refresh comments
 local function refresh_comments(message)
   common_ui.start_loading("Refreshing comments...")
@@ -195,9 +198,6 @@ local function setup_keymaps()
     end)
   end, opts)
 end
-
----@class Jira.Issue
-local M = {}
 
 ---@param issue_key string
 ---@param initial_tab? string
