@@ -61,6 +61,7 @@ local function curl_request(method, endpoint, data, callback)
   local env = get_env()
   local url = env.base .. endpoint
   local auth_type = env.auth_type or "basic"
+  local debug = env.debug or false
 
   -- Build curl command with authentication
   local cmd
@@ -70,6 +71,9 @@ local function curl_request(method, endpoint, data, callback)
       method,
       env.token
     )
+    if debug then
+      vim.notify(string.format("[Jira Debug] Using bearer token auth for %s %s", method, endpoint), vim.log.levels.INFO)
+    end
   else
     -- Use basic authentication (email + token)
     local auth = env.email .. ":" .. env.token
@@ -77,26 +81,30 @@ local function curl_request(method, endpoint, data, callback)
       method,
       auth
     )
+    if debug then
+      vim.notify(string.format("[Jira Debug] Using basic auth for %s %s", method, endpoint), vim.log.levels.INFO)
+    end
   end
 
   local temp_file = nil
   if data then
     local json_data = vim.json.encode(data)
-    temp_file = vim.fn.tempname()
-    local f = io.open(temp_file, "w")
-    if f then
-      f:write(json_data)
-      f:close()
-      cmd = ("%s-d @%s "):format(cmd, temp_file)
-    else
-      if callback and vim.is_callable(callback) then
-        callback(nil, "Failed to create temp file")
-      end
-      return
+    if debug then
+      vim.notify(string.format("[Jira Debug] Request data: %s", json_data), vim.log.levels.INFO)
     end
+    -- Escape quotes for shell
+    json_data = json_data:gsub('"', '\\"')
+    cmd = ('%s-d "%s" '):format(cmd, json_data)
   end
 
   cmd = ('%s"%s"'):format(cmd, url)
+  
+  if debug then
+    -- Print sanitized command (mask auth details)
+    local debug_cmd = cmd:gsub("Bearer [^%s]+", "Bearer ***")
+    debug_cmd = debug_cmd:gsub("-u %\"[^\"]+\"", "-u \"***\"")
+    vim.notify(string.format("[Jira Debug] Full URL: %s", url), vim.log.levels.INFO)
+  end
 
   local stdout = {}
   local stderr = {}
@@ -122,19 +130,31 @@ local function curl_request(method, endpoint, data, callback)
       end
 
       if code ~= 0 then
+        local error_msg = table.concat(stderr, "\n")
+        if error_msg == "" then
+          error_msg = "Curl failed with exit code " .. code
+        end
+        if debug then
+          vim.notify(string.format("[Jira Debug] Request failed: %s", error_msg), vim.log.levels.ERROR)
+        end
         if callback then
-          local error_msg = table.concat(stderr, "\n")
-          if error_msg == "" then
-            error_msg = "Curl failed with exit code " .. code
-          end
           callback(nil, "Curl failed: " .. error_msg)
         end
         return
       end
 
       local response = table.concat(stdout, "")
+      if debug then
+        local preview = response:sub(1, 500)
+        if #response > 500 then preview = preview .. "..." end
+        vim.notify(string.format("[Jira Debug] Response (%d bytes): %s", #response, preview), vim.log.levels.INFO)
+      end
+      
       if not response or response == "" then
         -- Return empty table for success with no content (e.g. 204 No Content)
+        if debug then
+          vim.notify("[Jira Debug] Empty response (success)", vim.log.levels.INFO)
+        end
         if callback and vim.is_callable(callback) then
           callback({}, nil)
         end
@@ -144,6 +164,9 @@ local function curl_request(method, endpoint, data, callback)
       -- Parse JSON
       local ok, result = pcall(vim.json.decode, response)
       if not ok then
+        if debug then
+          vim.notify(string.format("[Jira Debug] JSON parse failed: %s", tostring(result)), vim.log.levels.ERROR)
+        end
         if callback and vim.is_callable(callback) then
           callback(nil, "Failed to parse JSON: " .. tostring(result) .. " | Resp: " .. response)
         end
