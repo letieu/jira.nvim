@@ -250,7 +250,17 @@ function M.get_issues_by_jql(project, jql, callback)
     return
   end
 
-  fetch_issues_recursive(project, jql, callback)
+  -- Resolve currentUser() if needed
+  api.resolve_jql_current_user(jql, function(resolved_jql, err)
+    if err then
+      if callback and vim.is_callable(callback) then
+        callback(nil, "Failed to resolve JQL: " .. err)
+      end
+      return
+    end
+    
+    fetch_issues_recursive(project, resolved_jql, callback)
+  end)
 end
 
 return M

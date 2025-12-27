@@ -170,6 +170,57 @@ end
 ---@class Jira.API
 local M = {}
 
+-- Cache for current user info
+local current_user_cache = nil
+
+-- Get current user with caching
+---@param callback fun(user?: table, err?: string)
+function M.get_current_user(callback)
+  if current_user_cache then
+    if callback then callback(current_user_cache, nil) end
+    return
+  end
+  
+  M.get_myself(function(user, err)
+    if not err and user then
+      current_user_cache = user
+    end
+    if callback then callback(user, err) end
+  end)
+end
+
+-- Resolve JQL with currentUser() function
+---@param jql string
+---@param callback fun(resolved_jql?: string, err?: string)
+function M.resolve_jql_current_user(jql, callback)
+  -- If JQL doesn't contain currentUser(), return as-is
+  if not jql:find("currentUser%(%)") then
+    if callback then callback(jql, nil) end
+    return
+  end
+  
+  -- Try to use currentUser() as-is first (works in most cases)
+  -- Only replace if explicitly needed based on config
+  local env = config.options.jira
+  if not env.resolve_current_user then
+    if callback then callback(jql, nil) end
+    return
+  end
+  
+  -- Fetch current user and replace currentUser() with accountId
+  M.get_current_user(function(user, err)
+    if err or not user or not user.accountId then
+      -- Fallback to original JQL if we can't get user info
+      if callback then callback(jql, nil) end
+      return
+    end
+    
+    -- Replace currentUser() with accountId
+    local resolved = jql:gsub("currentUser%(%)", '"' .. user.accountId .. '"')
+    if callback then callback(resolved, nil) end
+  end)
+end
+
 -- Search for issues using JQL
 ---@param jql string
 ---@param fields? string[]

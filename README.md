@@ -45,6 +45,7 @@ A Neovim plugin for managing JIRA tasks with a beautiful UI.
       token = "your-api-token",                   -- Your Jira API token or bearer token
       auth_type = "basic",                        -- "basic" (default) or "bearer"
       use_jql_post = true,                        -- Use /search/jql endpoint (default: true). Set to false for /search
+      resolve_current_user = false,               -- Replace currentUser() with accountId in JQL (default: false)
       debug = false,                              -- Enable debug logging for API calls (default: false)
       limit = 500,                                -- Global limit of tasks per view
     },
@@ -65,6 +66,7 @@ require('jira').setup({
     token = "your-api-token",                   -- Your Jira API token or bearer token
     auth_type = "basic",                        -- "basic" (default) or "bearer"
     use_jql_post = true,                        -- Use /search/jql endpoint (default: true). Set to false for /search
+    resolve_current_user = false,               -- Replace currentUser() with accountId in JQL (default: false)
     debug = false,                              -- Enable debug logging for API calls (default: false)
     limit = 500,                                -- Global limit of tasks per view
   },
