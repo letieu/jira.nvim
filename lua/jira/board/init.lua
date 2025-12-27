@@ -297,7 +297,18 @@ function M.load_view(project_key, view_name)
 
   common_ui.start_loading("Loading " .. view_name .. " for " .. project_key .. "...")
 
-    local fetch_fn\n  if view_name == \"Active Sprint\" then\n    fetch_fn = function(pk, cb)\n      -- Pass force_refresh flag from refresh_view\n      local force_refresh = not cached_issues\n      sprint.get_active_sprint_issues(pk, cb, force_refresh)\n    end\n  elseif view_name == \"JQL\" then\n    fetch_fn = function(pk, cb)\n      sprint.get_issues_by_jql(pk, state.custom_jql, cb)\n    end\n  end
+  local fetch_fn
+  if view_name == "Active Sprint" then
+    fetch_fn = function(pk, cb)
+      -- Pass force_refresh flag from refresh_view
+      local force_refresh = not cached_issues
+      sprint.get_active_sprint_issues(pk, cb, force_refresh)
+    end
+  elseif view_name == "JQL" then
+    fetch_fn = function(pk, cb)
+      sprint.get_issues_by_jql(pk, state.custom_jql, cb)
+    end
+  end
 
   fetch_fn(project_key, function(issues, err)
     if err then
