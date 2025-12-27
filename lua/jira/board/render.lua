@@ -394,6 +394,7 @@ function M.render_help(view)
   render_header(view)
   local help_content = {
     { section = "Navigation & View" },
+    { k = "<CR>", d = "Open Issue / Toggle Node" },
     { k = "<Tab>", d = "Toggle Node (Expand/Collapse)" },
     { k = "S, J, H", d = "Switch View (Sprint, JQL, Help)" },
     { k = "q", d = "Close Board" },
