@@ -67,7 +67,7 @@ require('jira').setup({
   -- Saved JQL queries for the JQL tab
   -- Use %s as a placeholder for the project key
   queries = {
-    ["Backlog"] = "project = '%s' AND (sprint is EMPTY OR sprint not in openSprints()) AND statusCategory != Done ORDER BY Rank ASC",
+    ["Backlog"] = "project = DEV2 AND (issuetype IN standardIssueTypes() OR issuetype = Sub-task) AND (sprint IS EMPTY OR sprint NOT IN openSprints()) AND statusCategory != Done ORDER BY Rank ASC",
     ["My Tasks"] = "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC",
   },
 
@@ -91,11 +91,17 @@ require('jira').setup({
 Run the following command to open the Jira board:
 
 ```vim
-"Open board
+" Open board
 :Jira <PROJECT_KEY>
 
-"Open one task view
+" Open one task view (info)
 :Jira info ISSUE_KEY
+
+" Create new issue
+:Jira create [PROJECT_KEY]
+
+" Edit existing issue
+:Jira edit ISSUE_KEY
 ```
 
 If you don't provide a project key, you will be prompted to enter one.
@@ -136,7 +142,7 @@ make test
 - [x] Change assignee
 - [x] Log time
 - [x] Comment
-- [ ] Create, Edit task
+- [x] Create, Edit task
 - [ ] Update UI when terminal size change
 ...
 

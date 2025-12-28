@@ -2,7 +2,7 @@
 local M = {}
 
 ---@type string[]
-M.SUBCOMMANDS = { "info", "edit" }
+M.SUBCOMMANDS = { "info", "edit", "create" }
 
 ---@param args string
 function M.execute(args)
@@ -43,6 +43,12 @@ function M.execute(args)
 
     local issue_edit = require("jira.edit")
     issue_edit.open(key)
+    return
+  end
+
+  if cmd == "create" then
+    local project_key = parts[2]
+    require("jira.create").open(project_key)
     return
   end
 

@@ -105,7 +105,7 @@ function M.setup_keymaps()
 
   -- Clear existing buffer keymaps
   local keys_to_clear =
-    { "o", "S", "B", "J", "H", "K", "m", "gx", "r", "q", "gs", "ga", "gw", "gb", "<Esc>", "s", "a", "t", "co" }
+    { "o", "S", "B", "J", "H", "K", "m", "gx", "r", "q", "gs", "ga", "gw", "gb", "<Esc>", "s", "a", "t", "co", "i", "c" }
   for _, k in ipairs(keys_to_clear) do
     pcall(vim.api.nvim_buf_del_keymap, state.buf, "n", k)
   end
@@ -162,6 +162,9 @@ function M.setup_keymaps()
   end, opts)
   vim.keymap.set("n", "ga", function()
     require("jira.board").change_assignee()
+  end, opts)
+  vim.keymap.set("n", "i", function()
+    require("jira.board").create_issue()
   end, opts)
   vim.keymap.set("n", "gw", function()
     require("jira.board").log_time()
@@ -416,6 +419,21 @@ function M.edit_issue()
   end
 
   require("jira.edit").open(node.key)
+end
+
+function M.create_issue()
+  local node = helper.get_node_at_cursor()
+  local parent_key = nil
+
+  if node then
+    if node.parent then
+      parent_key = node.parent
+    elseif node.key then
+      parent_key = node.key
+    end
+  end
+
+  require("jira.create").open(state.project_key, parent_key)
 end
 
 function M.log_time()

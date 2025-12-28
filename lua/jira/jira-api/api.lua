@@ -362,5 +362,26 @@ function M.update_issue(issue_key, fields, callback)
   end)
 end
 
+-- Create issue
+---@param fields table
+---@param callback? fun(result?: table, err?: string)
+function M.create_issue(fields, callback)
+  local data = {
+    fields = fields,
+  }
+
+  curl_request("POST", "/rest/api/3/issue", data, function(result, err)
+    if err then
+      if callback and vim.is_callable(callback) then
+        callback(nil, err)
+      end
+      return
+    end
+    if callback and vim.is_callable(callback) then
+      callback(result, nil)
+    end
+  end)
+end
+
 return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

@@ -400,8 +400,10 @@ function M.render_help(view)
     { k = "r", d = "Refresh current view" },
 
     { section = "Issue Actions" },
+    { k = "i", d = "Create Issue / Sub-task (under cursor)" },
     { k = "K", d = "Quick Issue Details (Popup)" },
     { k = "gd", d = "Read Task as info" },
+    { k = "ge", d = "Edit Task" },
     { k = "gx", d = "Open Task in Browser" },
     { k = "gs", d = "Update Status" },
     { k = "ga", d = "Change Assignee" },
