@@ -308,6 +308,12 @@ local function setup_keymaps()
             vim.fn.delete(tmpfile)
           end, { buffer = attach_buf, noremap = true, silent = true })
           
+          -- Add keymap to open attachment in browser
+          vim.keymap.set("n", "gb", function()
+            vim.ui.open(target_url)
+            vim.notify("Opening attachment in browser...", vim.log.levels.INFO)
+          end, { buffer = attach_buf, noremap = true, silent = true })
+          
           -- For images, try to use image.nvim if available
           if is_image then
             local ok, image = pcall(require, "image")

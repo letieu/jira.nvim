@@ -225,6 +225,7 @@ function M.render_content()
       { k = "i", d = "Add Comment (in Comments tab)" },
       { k = "E", d = "Edit Comment (in Comments tab)" },
       { k = "gx", d = "Open Attachment in Neovim" },
+      { k = "gb", d = "Open Attachment in Browser (in viewer)" },
     }
 
     for _, item in ipairs(help_content) do
