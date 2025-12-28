@@ -70,6 +70,7 @@ function M.render_content()
   local fields = state.issue.fields or {}
 
   if state.active_tab == "description" then
+    table.insert(lines, "**Type**: " .. (fields.issuetype and fields.issuetype.name or "Unknown"))
     table.insert(lines, "**Status**: " .. (fields.status and fields.status.name or "Unknown"))
 
     local assignee_name = "Unassigned"
@@ -173,6 +174,7 @@ function M.render_content()
       { k = "q", d = "Close Window" },
 
       { section = "Actions" },
+      { k = "i", d = "Edit Description (in Description tab)" },
       { k = "i", d = "Add Comment (in Comments tab)" },
       { k = "r", d = "Edit Comment (in Comments tab)" },
     }

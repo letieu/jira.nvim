@@ -24,7 +24,7 @@ function M.setup(opts)
     nargs = "*",
     bang = true,
     complete = complete,
-    desc = "Jira view: :Jira [<PROJECT_KEY>] | info <ISSUE_KEY>",
+    desc = "Jira view: :Jira [<PROJECT_KEY>] | info <ISSUE_KEY> | create [<PROJECT_KEY>]",
   })
 end
 

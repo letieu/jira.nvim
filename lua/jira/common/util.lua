@@ -237,33 +237,120 @@ function M.markdown_to_adf(text)
   }
 
   local lines = vim.split(text, "\n")
-  local current_paragraph = nil
-
-  local function flush_paragraph()
-    if current_paragraph then
-      table.insert(doc.content, current_paragraph)
-      current_paragraph = nil
-    end
-  end
+  local current_node = nil
+  local in_code_block = false
+  local code_language = nil
+  local code_lines = {}
 
   for _, line in ipairs(lines) do
-    if line == "" then
-      flush_paragraph()
-    else
-      if not current_paragraph then
-        current_paragraph = { type = "paragraph", content = {} }
+    if in_code_block then
+      if line:match("^%s*```") then
+        -- End of code block
+        table.insert(doc.content, {
+          type = "codeBlock",
+          attrs = { language = code_language },
+          content = {
+            {
+              type = "text",
+              text = table.concat(code_lines, "\n"),
+            },
+          },
+        })
+        in_code_block = false
+        code_lines = {}
+        code_language = nil
+        current_node = nil
       else
-        -- Add space between lines in the same paragraph
-        table.insert(current_paragraph.content, { type = "text", text = " " })
+        table.insert(code_lines, line)
       end
+    else
+      local code_lang = line:match("^%s*```(%w*)")
+      local h_level, h_content = line:match("^(#+)%s+(.*)")
+      local b_content = line:match("^%s*[%-*]%s+(.*)")
+      local o_content = line:match("^%s*%d+%.%s+(.*)")
+      local is_empty = (line == "")
 
-      local nodes = M.parse_inline_markdown(line)
-      for _, node in ipairs(nodes) do
-        table.insert(current_paragraph.content, node)
+      if code_lang then
+        current_node = nil
+        in_code_block = true
+        code_language = code_lang
+        if code_language == "" then
+          code_language = nil
+        end
+        code_lines = {}
+      elseif is_empty then
+        current_node = nil
+      elseif h_level then
+        current_node = nil
+        table.insert(doc.content, {
+          type = "heading",
+          attrs = { level = #h_level },
+          content = M.parse_inline_markdown(h_content),
+        })
+      elseif b_content then
+        if not current_node or current_node.type ~= "bulletList" then
+          current_node = { type = "bulletList", content = {} }
+          table.insert(doc.content, current_node)
+        end
+        table.insert(current_node.content, {
+          type = "listItem",
+          content = {
+            {
+              type = "paragraph",
+              content = M.parse_inline_markdown(b_content),
+            },
+          },
+        })
+      elseif o_content then
+        if not current_node or current_node.type ~= "orderedList" then
+          current_node = { type = "orderedList", content = {} }
+          table.insert(doc.content, current_node)
+        end
+        table.insert(current_node.content, {
+          type = "listItem",
+          content = {
+            {
+              type = "paragraph",
+              content = M.parse_inline_markdown(o_content),
+            },
+          },
+        })
+      else
+        if current_node and current_node.type == "paragraph" then
+          table.insert(current_node.content, { type = "text", text = " " })
+          local nodes = M.parse_inline_markdown(line)
+          for _, n in ipairs(nodes) do
+            table.insert(current_node.content, n)
+          end
+        else
+          current_node = { type = "paragraph", content = {} }
+          table.insert(doc.content, current_node)
+          local nodes = M.parse_inline_markdown(line)
+          for _, n in ipairs(nodes) do
+            table.insert(current_node.content, n)
+          end
+        end
       end
     end
   end
-  flush_paragraph()
+
+  -- Handle unclosed code block
+  if in_code_block then
+    table.insert(doc.content, {
+      type = "codeBlock",
+      attrs = { language = code_language },
+      content = {
+        {
+          type = "text",
+          text = table.concat(code_lines, "\n"),
+        },
+      },
+    })
+  end
+
+  if #doc.content == 0 then
+    table.insert(doc.content, { type = "paragraph", content = { { type = "text", text = "" } } })
+  end
 
   return doc
 end

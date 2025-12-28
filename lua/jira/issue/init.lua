@@ -39,10 +39,15 @@ local function setup_keymaps()
     render.render_content()
   end, opts)
 
-  -- Add Comment
+  -- Add Comment / Edit Description
   vim.keymap.set("n", "i", function()
+    if state.active_tab == "description" then
+      require("jira.edit").open(state.issue.key)
+      return
+    end
+
     if state.active_tab ~= "comments" then
-      vim.notify("Switch to Comments tab to add a comment.", vim.log.levels.WARN)
+      vim.notify("Switch to Comments tab to add a comment or Description tab to edit.", vim.log.levels.WARN)
       return
     end
 

@@ -2,7 +2,7 @@
 local M = {}
 
 ---@type string[]
-M.SUBCOMMANDS = { "info" }
+M.SUBCOMMANDS = { "info", "edit", "create" }
 
 ---@param args string
 function M.execute(args)
@@ -29,13 +29,38 @@ function M.execute(args)
       tab = "comments"
     end
 
-    issue_view.open(key, tab)
+    issue_view.open(key:upper(), tab)
+    return
+  end
+
+  if cmd == "edit" then
+    local key = parts[2]
+
+    if not key then
+      vim.notify("Usage: :Jira edit <issue-key> [comment|description]", vim.log.levels.ERROR)
+      return
+    end
+
+    local issue_edit = require("jira.edit")
+    issue_edit.open(key:upper())
+    return
+  end
+
+  if cmd == "create" then
+    local project_key = parts[2]
+    if (project_key) then
+      project_key = project_key:upper()
+    end
+    require("jira.create").open(project_key)
     return
   end
 
   -- Default: Open Board
   -- Usage: :Jira [project-key]
   local project_key = parts[1]
+  if (project_key) then
+    project_key = project_key:upper()
+  end
   require("jira.board").open(project_key)
 end
 

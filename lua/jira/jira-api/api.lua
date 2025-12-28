@@ -48,11 +48,21 @@ local function curl_request(method, endpoint, data, callback)
     auth
   )
 
+  local temp_file = nil
   if data then
     local json_data = vim.json.encode(data)
-    -- Escape quotes for shell
-    json_data = json_data:gsub('"', '\\"')
-    cmd = ('%s-d "%s" '):format(cmd, json_data)
+    temp_file = vim.fn.tempname()
+    local f = io.open(temp_file, "w")
+    if f then
+      f:write(json_data)
+      f:close()
+      cmd = ('%s-d @%s '):format(cmd, temp_file)
+    else
+      if callback and vim.is_callable(callback) then
+        callback(nil, "Failed to create temp file")
+      end
+      return
+    end
   end
 
   cmd = ('%s"%s"'):format(cmd, url)
@@ -76,6 +86,10 @@ local function curl_request(method, endpoint, data, callback)
       end
     end,
     on_exit = function(_, code, _)
+      if temp_file then
+        os.remove(temp_file)
+      end
+      
       if code ~= 0 then
         if callback then
           callback(nil, "Curl failed: " .. table.concat(stderr, "\n"))
@@ -322,6 +336,92 @@ function M.edit_comment(issue_key, comment_id, comment, callback)
     end
     if callback then
       callback(true, nil)
+    end
+  end)
+end
+
+-- Update issue
+---@param issue_key string
+---@param fields table
+---@param callback? fun(result?: table, err?: string)
+function M.update_issue(issue_key, fields, callback)
+  local data = {
+    fields = fields,
+  }
+
+  curl_request("PUT", "/rest/api/3/issue/" .. issue_key, data, function(result, err)
+    if err then
+      if callback and vim.is_callable(callback) then
+        callback(nil, err)
+      end
+      return
+    end
+    if callback and vim.is_callable(callback) then
+      callback(result, nil)
+    end
+  end)
+end
+
+-- Create issue
+---@param fields table
+---@param callback? fun(result?: table, err?: string)
+function M.create_issue(fields, callback)
+  local data = {
+    fields = fields,
+  }
+
+  curl_request("POST", "/rest/api/3/issue", data, function(result, err)
+    if err then
+      if callback and vim.is_callable(callback) then
+        callback(nil, err)
+      end
+      return
+    end
+
+    if result and (result.errorMessages or result.errors) then
+      local errors = {}
+      if result.errorMessages then
+        for _, msg in ipairs(result.errorMessages) do
+          table.insert(errors, msg)
+        end
+      end
+      if result.errors then
+        for k, v in pairs(result.errors) do
+          table.insert(errors, k .. ": " .. v)
+        end
+      end
+
+      if #errors > 0 then
+        if callback and vim.is_callable(callback) then
+          callback(nil, table.concat(errors, "\n"))
+        end
+        return
+      end
+    end
+
+    if callback and vim.is_callable(callback) then
+      callback(result, nil)
+    end
+  end)
+end
+
+-- Get create metadata (issue types) for a project
+function M.get_create_meta(project_key, callback)
+  curl_request("GET", "/rest/api/3/issue/createmeta?projectKeys=" .. project_key, nil, function(result, err)
+    if err then
+      if callback and vim.is_callable(callback) then
+        callback(nil, err)
+      end
+      return
+    end
+    if callback and vim.is_callable(callback) then
+      -- Result structure: { projects: [ { key: "PROJ", issuetypes: [ ... ] } ] }
+      local project_data = result.projects and result.projects[1]
+      if project_data then
+        callback(project_data.issuetypes, nil)
+      else
+        callback({}, nil)
+      end
     end
   end)
 end
