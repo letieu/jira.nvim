@@ -67,7 +67,7 @@ require('jira').setup({
   -- Saved JQL queries for the JQL tab
   -- Use %s as a placeholder for the project key
   queries = {
-    ["Backlog"] = "project = DEV2 AND (issuetype IN standardIssueTypes() OR issuetype = Sub-task) AND (sprint IS EMPTY OR sprint NOT IN openSprints()) AND statusCategory != Done ORDER BY Rank ASC",
+    ["Backlog"] = "project = '%s' AND (issuetype IN standardIssueTypes() OR issuetype = Sub-task) AND (sprint IS EMPTY OR sprint NOT IN openSprints()) AND statusCategory != Done ORDER BY Rank ASC",
     ["My Tasks"] = "assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC",
   },
 
