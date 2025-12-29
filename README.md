@@ -160,6 +160,7 @@ make test
 - [x] Log time
 - [x] Comment
 - [x] Create, Edit task
+- [ ] Bulk actions
 - [ ] Update UI when terminal size change
 ...
 
