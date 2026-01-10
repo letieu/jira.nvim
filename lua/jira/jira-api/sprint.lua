@@ -121,7 +121,7 @@ function M.get_active_sprint_issues(project, callback)
     return
   end
 
-  local jql = ("project = '%s' AND sprint in openSprints() ORDER BY Rank ASC"):format(project)
+  local jql = (config.options.active_sprint_query):format(project)
 
   fetch_issues_recursive(project, jql, callback)
 end
@@ -137,7 +137,8 @@ function M.get_backlog_issues(project, callback)
     return
   end
 
-  local jql = ("project = '%s' AND (sprint is EMPTY OR sprint not in openSprints()) AND issuetype not in (Epic) AND statusCategory != Done ORDER BY Rank ASC"):format(
+  local jql = ("project = '%s' AND (sprint is EMPTY OR sprint not in openSprints()) AND issuetype not in (Epic) AND statusCategory != Done ORDER BY Rank ASC")
+  :format(
     project
   )
 

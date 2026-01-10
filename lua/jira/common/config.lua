@@ -18,6 +18,7 @@ local FALLBACKS = {
 ---@class JiraConfig
 ---@field jira JiraAuthOptions
 ---@field projects? table<string, table> Project-specific overrides
+---@field active_sprint_query? string JQL for active sprint tab
 ---@field queries? table<string, string> Saved JQL queries
 M.defaults = {
   jira = {
@@ -28,6 +29,7 @@ M.defaults = {
     limit = 200,
   },
   projects = {},
+  active_sprint_query = "project = '%s' AND sprint in openSprints() ORDER BY Rank ASC",
   queries = {
     ["Next sprint"] = "project = '%s' AND sprint in futureSprints() ORDER BY Rank ASC",
     ["Backlog"] = "project = '%s' AND (issuetype IN standardIssueTypes() OR issuetype = Sub-task) AND (sprint IS EMPTY OR sprint NOT IN openSprints()) AND statusCategory != Done ORDER BY Rank ASC",
