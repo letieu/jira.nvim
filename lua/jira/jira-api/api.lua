@@ -7,6 +7,7 @@
 -- api.lua: Jira REST API client using curl
 local config = require("jira.common.config")
 local util = require("jira.common.util")
+local version = require("jira.jira-api.version")
 
 -- Get environment variables
 ---@return JiraAuthOptions auth_opts
@@ -18,6 +19,7 @@ local function get_env()
   env.email = os.getenv("JIRA_EMAIL") or config.options.jira.email
   env.token = os.getenv("JIRA_TOKEN") or config.options.jira.token
   env.type = (os.getenv("JIRA_AUTH_TYPE") or config.options.jira.type or "basic"):lower()
+  env.api_version = os.getenv("JIRA_API_VERSION") or config.options.jira.api_version or "3"
   env.limit = config.options.jira.limit
 
   return env
@@ -163,19 +165,28 @@ function M.search_issues(jql, page_token, max_results, fields, callback, project
       story_point_field,
     }
 
-  local data = {
-    jql = jql,
-    fields = fields,
-    nextPageToken = page_token or "",
-    maxResults = max_results or 100,
-  }
+  local data = version.transform_search_data(jql, page_token, max_results, fields)
+  local endpoint = version.get_search_endpoint()
 
-  curl_request("POST", "/rest/api/3/search/jql", data, callback)
+  curl_request("POST", endpoint, data, function(result, err)
+    if err then
+      if callback and vim.is_callable(callback) then
+        callback(nil, err)
+      end
+      return
+    end
+
+    local transformed_result = version.transform_search_response(result)
+    if callback and vim.is_callable(callback) then
+      callback(transformed_result, nil)
+    end
+  end)
 end
 
 -- Get available transitions for an issue
 function M.get_transitions(issue_key, callback)
-  curl_request("GET", "/rest/api/3/issue/" .. issue_key .. "/transitions", nil, function(result, err)
+  local endpoint = version.get_api_path() .. "/issue/" .. issue_key .. "/transitions"
+  curl_request("GET", endpoint, nil, function(result, err)
     local is_fun = (callback and vim.is_callable(callback))
     if err then
       if callback and is_fun then
@@ -194,7 +205,8 @@ end
 ---@param callback? fun(cond?: boolean, err?: string)
 function M.transition_issue(issue_key, transition_id, callback)
   local data = { transition = { id = transition_id } }
-  curl_request("POST", "/rest/api/3/issue/" .. issue_key .. "/transitions", data, function(_, err)
+  local endpoint = version.get_api_path() .. "/issue/" .. issue_key .. "/transitions"
+  curl_request("POST", endpoint, data, function(_, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, err)
@@ -222,24 +234,11 @@ function M.add_worklog(issue_key, time_spent, comment, callback)
   }
 
   if comment and comment ~= "" then
-    data.comment = {
-      type = "doc",
-      version = 1,
-      content = {
-        {
-          type = "paragraph",
-          content = {
-            {
-              type = "text",
-              text = comment,
-            },
-          },
-        },
-      },
-    }
+    data.comment = version.transform_comment_data(comment).body
   end
 
-  curl_request("POST", "/rest/api/3/issue/" .. issue_key .. "/worklog", data, function(_, err)
+  local endpoint = version.get_api_path() .. "/issue/" .. issue_key .. "/worklog"
+  curl_request("POST", endpoint, data, function(_, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, err)
@@ -259,7 +258,8 @@ function M.assign_issue(issue_key, account_id, callback)
     accountId = account_id,
   }
 
-  curl_request("PUT", "/rest/api/3/issue/" .. issue_key .. "/assignee", data, function(_, err)
+  local endpoint = version.get_api_path() .. "/issue/" .. issue_key .. "/assignee"
+  curl_request("PUT", endpoint, data, function(_, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, err)
@@ -274,24 +274,44 @@ end
 
 -- Get current user details
 function M.get_myself(callback)
-  curl_request("GET", "/rest/api/3/myself", nil, callback)
+  local endpoint = version.get_api_path() .. "/myself"
+  curl_request("GET", endpoint, nil, callback)
 end
 
 -- Get issue details
 ---@param issue_key string
 ---@param callback function
 function M.get_issue(issue_key, callback)
-  curl_request("GET", "/rest/api/3/issue/" .. issue_key, nil, callback)
+  local endpoint = version.get_api_path() .. "/issue/" .. issue_key
+  curl_request("GET", endpoint, nil, function(result, err)
+    if err then
+      if callback and vim.is_callable(callback) then
+        callback(nil, err)
+      end
+      return
+    end
+
+    -- Ensure the response has the expected structure
+    if result and not result.key then
+      result.key = issue_key
+    end
+
+    if callback and vim.is_callable(callback) then
+      callback(result, nil)
+    end
+  end)
 end
 
 -- Get statuses for a project
 function M.get_project_statuses(project, callback)
-  curl_request("GET", "/rest/api/3/project/" .. project .. "/statuses", nil, callback)
+  local endpoint = version.get_api_path() .. "/project/" .. project .. "/statuses"
+  curl_request("GET", endpoint, nil, callback)
 end
 
 -- Get comments for an issue
 function M.get_comments(issue_key, callback)
-  curl_request("GET", "/rest/api/3/issue/" .. issue_key .. "/comment", nil, function(result, err)
+  local endpoint = version.get_api_path() .. "/issue/" .. issue_key .. "/comment"
+  curl_request("GET", endpoint, nil, function(result, err)
     if err then
       if callback then
         callback(nil, err)
@@ -306,18 +326,10 @@ end
 
 -- Add comment to an issue
 function M.add_comment(issue_key, comment, callback)
-  local body
-  if type(comment) == "string" then
-    body = util.markdown_to_adf(comment)
-  else
-    body = comment
-  end
+  local data = version.transform_comment_data(comment)
+  local endpoint = version.get_api_path() .. "/issue/" .. issue_key .. "/comment"
 
-  local data = {
-    body = body,
-  }
-
-  curl_request("POST", "/rest/api/3/issue/" .. issue_key .. "/comment", data, function(_, err)
+  curl_request("POST", endpoint, data, function(_, err)
     if err then
       if callback then
         callback(nil, err)
@@ -332,18 +344,10 @@ end
 
 -- Edit a comment
 function M.edit_comment(issue_key, comment_id, comment, callback)
-  local body
-  if type(comment) == "string" then
-    body = util.markdown_to_adf(comment)
-  else
-    body = comment
-  end
+  local data = version.transform_comment_data(comment)
+  local endpoint = version.get_api_path() .. "/issue/" .. issue_key .. "/comment/" .. comment_id
 
-  local data = {
-    body = body,
-  }
-
-  curl_request("PUT", "/rest/api/3/issue/" .. issue_key .. "/comment/" .. comment_id, data, function(_, err)
+  curl_request("PUT", endpoint, data, function(_, err)
     if err then
       if callback then
         callback(nil, err)
@@ -365,7 +369,8 @@ function M.update_issue(issue_key, fields, callback)
     fields = fields,
   }
 
-  curl_request("PUT", "/rest/api/3/issue/" .. issue_key, data, function(result, err)
+  local endpoint = version.get_api_path() .. "/issue/" .. issue_key
+  curl_request("PUT", endpoint, data, function(result, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, err)
@@ -386,7 +391,8 @@ function M.create_issue(fields, callback)
     fields = fields,
   }
 
-  curl_request("POST", "/rest/api/3/issue", data, function(result, err)
+  local endpoint = version.get_api_path() .. "/issue"
+  curl_request("POST", endpoint, data, function(result, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, err)
@@ -415,6 +421,13 @@ function M.create_issue(fields, callback)
       end
     end
 
+    -- Ensure result has key field for both v2 and v3
+    if result and not result.key and result.id then
+      -- For some responses, we might need to fetch the issue to get the key
+      M.get_issue(result.id, callback)
+      return
+    end
+
     if callback and vim.is_callable(callback) then
       callback(result, nil)
     end
@@ -423,7 +436,8 @@ end
 
 -- Get create metadata (issue types) for a project
 function M.get_create_meta(project_key, callback)
-  curl_request("GET", "/rest/api/3/issue/createmeta?projectKeys=" .. project_key, nil, function(result, err)
+  local endpoint = version.get_api_path() .. "/issue/createmeta?projectKeys=" .. project_key
+  curl_request("GET", endpoint, nil, function(result, err)
     if err then
       if callback and vim.is_callable(callback) then
         callback(nil, err)

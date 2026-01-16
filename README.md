@@ -63,6 +63,7 @@ require('jira').setup({
     email = "your-email@example.com",           -- Your Jira email (Optional for PAT)
     token = "your-api-token",                   -- Your Jira API token or PAT
     type = "basic",                             -- Authentication type: "basic" (default) or "pat"
+    api_version = "3",                          -- API version: "2" or "3" (default: "3")
     limit = 200,                                -- Global limit of tasks per view (default: 200)
   },
 
@@ -103,6 +104,7 @@ Supported environment variables:
 - `JIRA_EMAIL` - Your Jira email (Optional for PAT)
 - `JIRA_TOKEN` - Your Jira API token or PAT
 - `JIRA_AUTH_TYPE` - Authentication type: "basic" (default) or "pat"
+- `JIRA_API_VERSION` - API version: "2" or "3" (default: "3")
 
 ---
 

@@ -13,6 +13,7 @@ local FALLBACKS = {
 ---@field email? string Your Jira email (required for basic auth)
 ---@field token string Your Jira API token or PAT
 ---@field type? "basic"|"pat" Authentication type (default: "basic")
+---@field api_version? "2"|"3" API version to use (default: "3")
 ---@field limit? number Global limit of tasks when calling API
 
 ---@class JiraConfig
@@ -26,6 +27,7 @@ M.defaults = {
     email = "",
     token = "",
     type = "basic",
+    api_version = "3",
     limit = 200,
   },
   projects = {},

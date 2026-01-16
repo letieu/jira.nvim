@@ -1,7 +1,7 @@
 local M = {}
 
 function M.parse_inline_markdown(text)
-  return {{ type = "text", text = text }}
+  return { { type = "text", text = text } }
 end
 
 function M.markdown_to_adf(text)
@@ -41,7 +41,7 @@ function M.markdown_to_adf(text)
     else
       local code_start, lang = line:match("^```(%w*)")
       local h_level, h_content = line:match("^(#+)%s+(.*)")
-      
+
       if code_start then
         current_node = nil
         in_code_block = true
@@ -49,20 +49,20 @@ function M.markdown_to_adf(text)
         code_lines = {}
         print("DEBUG: Start code block. Capture1:", code_start, "Capture2:", lang)
       elseif h_level then
-         -- ...
+        -- ...
       else
-         -- ...
+        -- ...
       end
     end
   end
-  
+
   -- Handle unclosed
   if in_code_block then
-      table.insert(doc.content, {
-          type = "codeBlock",
-          attrs = { language = code_language },
-          content = {{ type = "text", text = table.concat(code_lines, "\n") }}
-      })
+    table.insert(doc.content, {
+      type = "codeBlock",
+      attrs = { language = code_language },
+      content = { { type = "text", text = table.concat(code_lines, "\n") } },
+    })
   end
 
   return doc

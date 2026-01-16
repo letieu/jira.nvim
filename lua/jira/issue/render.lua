@@ -79,12 +79,12 @@ function M.render_content()
     end
     table.insert(lines, "**Assignee**: " .. assignee_name)
     table.insert(lines, "**Priority**: " .. (fields.priority and fields.priority.name or "None"))
-    
+
     -- Display labels if they exist
     if fields.labels and type(fields.labels) == "table" and #fields.labels > 0 then
       table.insert(lines, "**Labels**: " .. table.concat(fields.labels, ", "))
     end
-    
+
     table.insert(lines, "")
     table.insert(lines, "## Description")
     table.insert(lines, "")

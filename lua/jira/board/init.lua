@@ -137,9 +137,30 @@ function M.setup_keymaps()
   local opts = { noremap = true, silent = true, buffer = state.buf }
 
   -- Clear existing buffer keymaps
-  local keys_to_clear =
-  { "o", "S", "B", "J", "H", "K", "m", "gx", "r", "q", "gs", "ga", "gw", "gb", "go", "<Esc>", "s", "a", "t", "co", "i",
-    "c" }
+  local keys_to_clear = {
+    "o",
+    "S",
+    "B",
+    "J",
+    "H",
+    "K",
+    "m",
+    "gx",
+    "r",
+    "q",
+    "gs",
+    "ga",
+    "gw",
+    "gb",
+    "go",
+    "<Esc>",
+    "s",
+    "a",
+    "t",
+    "co",
+    "i",
+    "c",
+  }
   for _, k in ipairs(keys_to_clear) do
     pcall(vim.api.nvim_buf_del_keymap, state.buf, "n", k)
   end

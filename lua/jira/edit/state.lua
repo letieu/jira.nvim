@@ -6,7 +6,6 @@
 ---@field issue? JiraIssueEdit
 ---@field buf? integer
 ---@field win? integer
-local M = {
-}
+local M = {}
 
 return M

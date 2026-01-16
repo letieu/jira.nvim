@@ -71,10 +71,20 @@ M.format_time = function(seconds)
   return ("%.1f"):format(hours)
 end
 
----@param node table
+---@param node table|string
 ---@return string parsed_adf
 local function parse_adf(node)
-  if not node or vim.tbl_isempty(node) then
+  if not node then
+    return ""
+  end
+
+  -- Handle plain text
+  if type(node) == "string" then
+    return node
+  end
+
+  -- Handle table structure
+  if type(node) ~= "table" or vim.tbl_isempty(node) then
     return ""
   end
   if node.type == "hardBreak" then
@@ -155,13 +165,24 @@ local function parse_adf(node)
   return joined
 end
 
----@param adf? table
+---@param adf? table|string
 ---@return string
 function M.adf_to_markdown(adf)
   if not adf or adf == vim.NIL then
     return ""
   end
-  return parse_adf(adf)
+
+  -- Handle plain text (v2 API)
+  if type(adf) == "string" then
+    return adf
+  end
+
+  -- Handle ADF structure (v3 API)
+  if type(adf) == "table" then
+    return parse_adf(adf)
+  end
+
+  return ""
 end
 
 function M.strim(s)

@@ -14,7 +14,9 @@ local state = {
 }
 
 local function update_type_line(type_name)
-  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then return end
+  if not state.buf or not vim.api.nvim_buf_is_valid(state.buf) then
+    return
+  end
 
   local lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
   for i, line in ipairs(lines) do
@@ -29,7 +31,7 @@ local function update_type_line(type_name)
         virt_text = { { "  Press <Enter> to select", "Comment" } },
         virt_text_pos = "eol",
       })
-      
+
       vim.bo[state.buf].modified = false
       break
     end
@@ -134,27 +136,41 @@ local function on_save()
   for i, line in ipairs(lines) do
     if i == 1 and line:match("^# ") then
       summary = line:sub(3)
-      if summary == "Summary" then summary = nil end
+      if summary == "Summary" then
+        summary = nil
+      end
     elseif not in_description and line == "---" then
       in_description = true
     elseif not in_description then
       local t_val = line:match("^%*%*Type%*%*:?%s*(.*)")
-      if t_val then issue_type = common_util.strim(t_val) end
+      if t_val then
+        issue_type = common_util.strim(t_val)
+      end
 
       local p_val = line:match("^%*%*Priority%*%*:?%s*(.*)")
-      if p_val then priority = common_util.strim(p_val) end
+      if p_val then
+        priority = common_util.strim(p_val)
+      end
 
       local parent_val = line:match("^%*%*Parent%*%*:?%s*(.*)")
-      if parent_val then parent_key = common_util.strim(parent_val) end
+      if parent_val then
+        parent_key = common_util.strim(parent_val)
+      end
 
       local sp_val = line:match("^%*%*Story Points%*%*:?%s*(.*)")
-      if sp_val then story_points = common_util.strim(sp_val) end
+      if sp_val then
+        story_points = common_util.strim(sp_val)
+      end
 
       local est_val = line:match("^%*%*Estimate%*%*:?%s*(.*)")
-      if est_val then estimate = common_util.strim(est_val) end
+      if est_val then
+        estimate = common_util.strim(est_val)
+      end
 
       local labels_val = line:match("^%*%*Labels%*%*:?%s*(.*)")
-      if labels_val then labels = common_util.strim(labels_val) end
+      if labels_val then
+        labels = common_util.strim(labels_val)
+      end
     elseif in_description then
       table.insert(desc_lines, line)
     end
@@ -212,7 +228,12 @@ local function on_save()
     end
     description_text = common_util.strim(description_text)
     if description_text ~= "" then
-      fields.description = common_util.markdown_to_adf(description_text)
+      local version = require("jira.jira-api.version")
+      if version.is_v2() then
+        fields.description = description_text
+      else
+        fields.description = common_util.markdown_to_adf(description_text)
+      end
     end
   end
 
@@ -280,7 +301,7 @@ function M.open(project_key, parent_key)
     style = "minimal",
     border = "rounded",
     title = " Create Issue: " .. project_key .. " (Save to create) ",
-    title_pos = "center"
+    title_pos = "center",
   })
 
   state.buf = buf

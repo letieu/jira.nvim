@@ -5,19 +5,19 @@ local data = {
       type = "codeBlock",
       content = {
         {
-           type = "text",
-           text = text
-        }
-      }
-    }
-  }
+          type = "text",
+          text = text,
+        },
+      },
+    },
+  },
 }
 
 local json_data = vim.json.encode(data)
 print("Original JSON: " .. json_data)
 
 -- Logic from api.lua
-local escaped = json_data:gsub('"', '\"')
+local escaped = json_data:gsub('"', '"')
 print("Escaped for Shell: " .. escaped)
 
 local cmd = ('curl -d "%s"'):format(escaped)
