@@ -1,5 +1,5 @@
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 > [!CAUTION]
@@ -208,6 +208,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://codeberg.org/DrKJeff16"><img src="https://avatars.githubusercontent.com/u/72052712?v=4?s=100" width="100px;" alt="Guennadi Maximov C"/><br /><sub><b>Guennadi Maximov C</b></sub></a><br /><a href="https://github.com/letieu/jira.nvim/commits?author=DrKJeff16" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://elsesiy.com"><img src="https://avatars.githubusercontent.com/u/7075075?v=4?s=100" width="100px;" alt="Jonas-Taha El Sesiy"/><br /><sub><b>Jonas-Taha El Sesiy</b></sub></a><br /><a href="https://github.com/letieu/jira.nvim/commits?author=elsesiy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/bhedavivek"><img src="https://avatars.githubusercontent.com/u/12003668?v=4?s=100" width="100px;" alt="Vivek Bheda"/><br /><sub><b>Vivek Bheda</b></sub></a><br /><a href="https://github.com/letieu/jira.nvim/commits?author=bhedavivek" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
