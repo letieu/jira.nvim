@@ -324,7 +324,11 @@ function M.load_view(project_key, view_name)
     if err then
       vim.schedule(function()
         common_ui.stop_loading()
-        vim.notify("Error: " .. err, vim.log.levels.ERROR)
+        if err == "Missing Jira authentication" then
+          vim.notify("Jira: Not logged in. Please use :Jira auth login", vim.log.levels.ERROR)
+        else
+          vim.notify("Error: " .. err, vim.log.levels.ERROR)
+        end
       end)
       return
     end

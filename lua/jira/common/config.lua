@@ -23,10 +23,6 @@ local FALLBACKS = {
 ---@field queries? table<string, string> Saved JQL queries
 M.defaults = {
   jira = {
-    base = "",
-    email = "",
-    token = "",
-    type = "basic",
     api_version = "3",
     limit = 200,
   },
