@@ -30,7 +30,10 @@ end
 local function validate_env()
   local env = get_env()
   local is_pat = env.type == "pat"
-  if not env.base or (not is_pat and not env.email) or not env.token then
+
+  if not env.base or env.base == ""
+      or (not is_pat and (not env.email or env.email == ""))
+      or not env.token or env.token == "" then
     vim.notify("Missing Jira environment variables. Please check your setup.", vim.log.levels.ERROR)
     return false
   end
@@ -153,17 +156,17 @@ local M = {}
 function M.search_issues(jql, page_token, max_results, fields, callback, project_key)
   local story_point_field = config.get_project_config(project_key).story_point_field
   fields = fields
-    or {
-      "summary",
-      "status",
-      "parent",
-      "priority",
-      "assignee",
-      "timespent",
-      "timeoriginalestimate",
-      "issuetype",
-      story_point_field,
-    }
+      or {
+        "summary",
+        "status",
+        "parent",
+        "priority",
+        "assignee",
+        "timespent",
+        "timeoriginalestimate",
+        "issuetype",
+        story_point_field,
+      }
 
   local data = version.transform_search_data(jql, page_token, max_results, fields)
   local endpoint = version.get_search_endpoint()
