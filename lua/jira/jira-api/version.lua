@@ -6,7 +6,7 @@ local M = {}
 
 -- Get API version from config/env
 function M.get_api_version()
-  return os.getenv("JIRA_API_VERSION") or config.options.jira.api_version or "3"
+  return config.options.jira.api_version or "3"
 end
 
 -- Check if using API v2

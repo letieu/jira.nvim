@@ -12,29 +12,29 @@ local version = require("jira.jira-api.version")
 -- Get environment variables
 ---@return JiraAuthOptions auth_opts
 local function get_env()
+  local auth = require("jira.common.auth").load() or {}
   local env = {}
 
-  -- Check environment variables first, fall back to config
-  env.base = os.getenv("JIRA_BASE_URL") or config.options.jira.base
-  env.email = os.getenv("JIRA_EMAIL") or config.options.jira.email
-  env.token = os.getenv("JIRA_TOKEN") or config.options.jira.token
-  env.type = (os.getenv("JIRA_AUTH_TYPE") or config.options.jira.type or "basic"):lower()
-  env.api_version = os.getenv("JIRA_API_VERSION") or config.options.jira.api_version or "3"
+  env.base = auth.base
+  env.email = auth.email
+  env.token = auth.token
+  env.type = (auth.type or "basic"):lower()
+  env.api_version = config.options.jira.api_version or "3"
   env.limit = config.options.jira.limit
 
   return env
 end
 
--- Validate environment variables
+-- Validate authentication
 ---@return boolean valid
-local function validate_env()
+local function validate_auth()
   local env = get_env()
   local is_pat = env.type == "pat"
 
   if not env.base or env.base == ""
       or (not is_pat and (not env.email or env.email == ""))
       or not env.token or env.token == "" then
-    vim.notify("Missing Jira environment variables. Please check your setup.", vim.log.levels.ERROR)
+    vim.notify("Missing Jira authentication. Use :Jira auth login.", vim.log.levels.ERROR)
     return false
   end
   return true
@@ -46,9 +46,9 @@ end
 ---@param data? table
 ---@param callback? fun(T?: table, err?: string)
 local function curl_request(method, endpoint, data, callback)
-  if not validate_env() then
+  if not validate_auth() then
     if callback and vim.is_callable(callback) then
-      callback(nil, "Missing environment variables")
+      callback(nil, "Missing Jira authentication")
     end
     return
   end

@@ -2,7 +2,7 @@
 local M = {}
 
 ---@type string[]
-M.SUBCOMMANDS = { "info", "edit", "create" }
+M.SUBCOMMANDS = { "info", "edit", "create", "auth" }
 
 ---@param args string
 function M.execute(args)
@@ -12,6 +12,21 @@ function M.execute(args)
   end
 
   local cmd = parts[1]
+
+  if cmd == "auth" then
+    local sub_cmd = parts[2]
+    local auth = require("jira.common.auth")
+    if sub_cmd == "login" then
+      auth.login()
+    elseif sub_cmd == "info" then
+      auth.show_info()
+    elseif sub_cmd == "logout" then
+      auth.logout()
+    else
+      vim.notify("Usage: :Jira auth [login|info|logout]", vim.log.levels.ERROR)
+    end
+    return
+  end
 
   if cmd == "info" then
     local key = parts[2]
