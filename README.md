@@ -41,10 +41,6 @@ A Neovim plugin for managing JIRA tasks with a beautiful UI.
   opts = {
     -- Your setup options...
     jira = {
-      base = "https://your-domain.atlassian.net", -- Base URL of your Jira instance
-      email = "your-email@example.com",           -- Your Jira email (Optional for PAT)
-      token = "your-api-token",                   -- Your Jira API token or PAT
-      type = "basic",                             -- Authentication type: "basic" (default) or "pat"
       limit = 200,                                -- Global limit of tasks per view (default: 200)
     },
   },
@@ -53,16 +49,34 @@ A Neovim plugin for managing JIRA tasks with a beautiful UI.
 
 ---
 
+## Authentication
+
+The plugin uses a command-based authentication system. Run the following command to log in:
+
+```vim
+:Jira auth login
+```
+
+You will be prompted for:
+1. **Jira Base URL**: (e.g., `https://your-domain.atlassian.net`)
+2. **Auth Type**: `basic` (default) or `pat`
+3. **Email**: (Required for `basic`)
+4. **API Token / PAT**: Your Jira API token or Personal Access Token
+
+Credentials are securely stored in your Neovim data directory (`:Jira auth info` to see the exact path).
+
+Other auth commands:
+- `:Jira auth info`: Show current authentication status and file location.
+- `:Jira auth logout`: Remove stored credentials.
+
+---
+
 ## Configuration
 
 ```lua
 require('jira').setup({
-  -- Jira connection settings
+  -- Jira settings
   jira = {
-    base = "https://your-domain.atlassian.net", -- Base URL of your Jira instance
-    email = "your-email@example.com",           -- Your Jira email (Optional for PAT)
-    token = "your-api-token",                   -- Your Jira API token or PAT
-    type = "basic",                             -- Authentication type: "basic" (default) or "pat"
     api_version = "3",                          -- API version: "2" or "3" (default: "3")
     limit = 200,                                -- Global limit of tasks per view (default: 200)
   },
@@ -90,22 +104,6 @@ require('jira').setup({
 })
 ```
 
-Alternatively, you can set Jira credentials using environment variables, which takes precedence over config:
-
-```bash
-export JIRA_BASE_URL="https://your-domain.atlassian.net"
-export JIRA_EMAIL="your-email@example.com"
-export JIRA_TOKEN="your-api-token"
-export JIRA_AUTH_TYPE="basic" # or "pat"
-```
-
-Supported environment variables:
-- `JIRA_BASE_URL` - Base URL of your Jira instance
-- `JIRA_EMAIL` - Your Jira email (Optional for PAT)
-- `JIRA_TOKEN` - Your Jira API token or PAT
-- `JIRA_AUTH_TYPE` - Authentication type: "basic" (default) or "pat"
-- `JIRA_API_VERSION` - API version: "2" or "3" (default: "3")
-
 ---
 
 ## Usage
@@ -113,6 +111,11 @@ Supported environment variables:
 Run the following command to open the Jira board:
 
 ```vim
+" Authentication
+:Jira auth login
+:Jira auth info
+:Jira auth logout
+
 " Open board
 :Jira <PROJECT_KEY>
 
