@@ -599,9 +599,11 @@ function M.open_in_browser()
     return
   end
 
-  local base = config.options.jira.base
+  local auth = require("jira.common.auth").load() or {}
+  local base = auth.base;
+
   if not base or base == "" then
-    vim.notify("Jira base URL is not configured", vim.log.levels.ERROR)
+    vim.notify("Jira base URL is not configured, please login", vim.log.levels.ERROR)
     return
   end
 
