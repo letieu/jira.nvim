@@ -79,6 +79,7 @@ require('jira').setup({
   jira = {
     api_version = "3",                          -- API version: "2" or "3" (default: "3")
     limit = 200,                                -- Global limit of tasks per view (default: 200)
+    logging = false,                            -- Enable HTTP request/response logging (default: false)
   },
 
   active_sprint_query = "project = '%s' AND sprint in openSprints() ORDER BY Rank ASC",
@@ -103,6 +104,8 @@ require('jira').setup({
   }
 })
 ```
+
+> **Note:** When `logging = true`, HTTP requests/responses are logged to `~/.local/state/nvim/jira_nvim.log` with sensitive auth tokens redacted.
 
 ---
 
