@@ -8,6 +8,7 @@
 local config = require("jira.common.config")
 local util = require("jira.common.util")
 local version = require("jira.jira-api.version")
+local log = require("jira.common.log")
 
 -- Get environment variables
 ---@return JiraAuthOptions auth_opts
@@ -88,6 +89,11 @@ local function curl_request(method, endpoint, data, callback)
 
   cmd = ('%s"%s"'):format(cmd, url)
 
+  -- Log the outgoing request
+  local json_body = data and vim.json.encode(data) or nil
+  log.request(method, url, auth_header, json_body)
+  local start_time = vim.loop.hrtime()
+
   local stdout = {}
   local stderr = {}
 
@@ -107,6 +113,12 @@ local function curl_request(method, endpoint, data, callback)
       end
     end,
     on_exit = function(_, code, _)
+      -- Calculate elapsed time and log response
+      local elapsed_ms = math.floor((vim.loop.hrtime() - start_time) / 1e6)
+      local response_body = table.concat(stdout, "")
+      local stderr_str = table.concat(stderr, "\n")
+      log.response(method, url, elapsed_ms, response_body, stderr_str, code)
+
       if temp_file then
         os.remove(temp_file)
       end
