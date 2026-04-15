@@ -33,6 +33,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "romanrev",
+      "name": "Roman Revyakin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2794589?v=4",
+      "profile": "http://devopsyturvy.net",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
