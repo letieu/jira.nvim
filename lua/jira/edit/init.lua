@@ -13,7 +13,7 @@ local function render_issue_as_md(issue)
   table.insert(lines, "")
 
   -- Metadata
-  local priority = fields.priority and fields.priority.name or "None"
+  local priority = fields.priority and fields.priority ~= vim.NIL and fields.priority.name or "None"
   table.insert(lines, ("**Priority**: %s"):format(priority))
 
   local assignee = "Unassigned"
