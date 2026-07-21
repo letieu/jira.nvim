@@ -1,5 +1,5 @@
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 > [!CAUTION]
@@ -219,6 +219,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bhedavivek"><img src="https://avatars.githubusercontent.com/u/12003668?v=4?s=100" width="100px;" alt="Vivek Bheda"/><br /><sub><b>Vivek Bheda</b></sub></a><br /><a href="https://github.com/letieu/jira.nvim/commits?author=bhedavivek" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://devopsyturvy.net"><img src="https://avatars.githubusercontent.com/u/2794589?v=4?s=100" width="100px;" alt="Roman Revyakin"/><br /><sub><b>Roman Revyakin</b></sub></a><br /><a href="https://github.com/letieu/jira.nvim/commits?author=romanrev" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/benelori"><img src="https://avatars.githubusercontent.com/u/6870459?v=4?s=100" width="100px;" alt="benelori"/><br /><sub><b>benelori</b></sub></a><br /><a href="https://github.com/letieu/jira.nvim/commits?author=benelori" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/AndromedaCLI"><img src="https://avatars.githubusercontent.com/u/59368718?v=4?s=100" width="100px;" alt="AndromedaCLI"/><br /><sub><b>AndromedaCLI</b></sub></a><br /><a href="https://github.com/letieu/jira.nvim/commits?author=AndromedaCLI" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
