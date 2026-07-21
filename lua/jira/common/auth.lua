@@ -46,30 +46,41 @@ end
 ---Prompt user for login details
 function M.login()
   local current = M.load() or {}
-  
   vim.ui.input({ prompt = "Jira Base URL: ", default = current.base or "" }, function(base)
-    if not base or base == "" then return end
-    
+    if not base or base == "" then
+      return
+    end
+    if base:sub(-1) == "/" then
+      base = base:sub(0, (base:len() - 1))
+    end
     vim.ui.select({ "basic (default)", "pat" }, { prompt = "Auth Type: " }, function(choice)
       -- Default to basic if user doesn't choose (e.g. cancels selection)
       local auth_type = "basic"
       if choice then
         auth_type = choice:match("^%s*(%w+)")
       end
-      
       if auth_type == "basic" then
         vim.ui.input({ prompt = "Jira Email: ", default = current.email or "" }, function(email)
-          if not email or email == "" then return end
+          if not email or email == "" then
+            return
+          end
           vim.ui.input({ prompt = "Jira API Token: " }, function(token)
-            if not token or token == "" then return end
+            if not token or token == "" then
+              return
+            end
             M.save({ base = base, email = email, token = token, type = "basic" })
           end)
         end)
       else
-        vim.ui.input({ prompt = "Jira PAT: ", default = (current.type == "pat" and current.token) or "" }, function(token)
-          if not token or token == "" then return end
-          M.save({ base = base, token = token, type = "pat" })
-        end)
+        vim.ui.input(
+          { prompt = "Jira PAT: ", default = (current.type == "pat" and current.token) or "" },
+          function(token)
+            if not token or token == "" then
+              return
+            end
+            M.save({ base = base, token = token, type = "pat" })
+          end
+        )
       end
     end)
   end)
@@ -82,7 +93,7 @@ function M.show_info()
     vim.notify("Not logged in to Jira\nAuth file: " .. AUTH_FILE, vim.log.levels.WARN)
     return
   end
-  
+
   local info = {
     "Jira Auth Info:",
     "Base URL: " .. auth.base,
@@ -93,7 +104,7 @@ function M.show_info()
   end
   table.insert(info, "Token: " .. string.rep("*", 8))
   table.insert(info, "Stored at: " .. AUTH_FILE)
-  
+
   vim.notify(table.concat(info, "\n"), vim.log.levels.INFO)
 end
 
