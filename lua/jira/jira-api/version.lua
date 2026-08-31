@@ -6,7 +6,10 @@ local M = {}
 
 -- Get API version from config/env
 function M.get_api_version()
-  local ver = config.options.jira.api_version
+  local auth = require("jira.common.auth").get_auth()
+  local ver = (auth and auth.api_version)
+    or (config.options and config.options.jira and config.options.jira.api_version)
+    or os.getenv("JIRA_API_VERSION")
   if ver == nil then
     return "3"
   end

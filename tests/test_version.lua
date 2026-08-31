@@ -76,6 +76,22 @@ T["version"]["get_api_version"]["should support string '3', integer 3, and 'v3'"
   MiniTest.expect.equality(child.lua_get([[_G.res_v]]), "3")
   MiniTest.expect.equality(child.lua_get([[_G.is_v2_v]]), false)
 end
+T["version"]["get_api_version"]["should support JIRA_API_VERSION env variable"] = function()
+  child.lua([[
+    local config = require("jira.common.config")
+    local version = require("jira.jira-api.version")
+    local auth = require("jira.common.auth")
+
+    auth.logout()
+    config.setup({})
+    vim.fn.setenv("JIRA_API_VERSION", "2")
+    _G.res_env = version.get_api_version()
+    _G.is_v2_env = version.is_v2()
+    vim.fn.setenv("JIRA_API_VERSION", nil)
+  ]])
+  MiniTest.expect.equality(child.lua_get([[_G.res_env]]), "2")
+  MiniTest.expect.equality(child.lua_get([[_G.is_v2_env]]), true)
+end
 
 T["version"]["endpoints"] = MiniTest.new_set()
 

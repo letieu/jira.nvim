@@ -13,14 +13,14 @@ local log = require("jira.common.log")
 -- Get environment variables
 ---@return JiraAuthOptions auth_opts
 local function get_env()
-  local auth = require("jira.common.auth").load() or {}
+  local auth = require("jira.common.auth").get_auth()
   local env = {}
 
   env.base = auth.base
   env.email = auth.email
   env.token = auth.token
-  env.type = (auth.type or "basic"):lower()
-  env.api_version = config.options.jira.api_version or "3"
+  env.type = auth.type or "basic"
+  env.api_version = config.options.jira.api_version or auth.api_version or "3"
   env.limit = config.options.jira.limit
 
   return env
@@ -30,12 +30,13 @@ end
 ---@return boolean valid
 local function validate_auth()
   local env = get_env()
-  local is_pat = env.type == "pat"
+  local auth_module = require("jira.common.auth")
+  local is_bearer = auth_module.is_bearer(env.type)
 
   if
     not env.base
     or env.base == ""
-    or (not is_pat and (not env.email or env.email == ""))
+    or (not is_bearer and (not env.email or env.email == ""))
     or not env.token
     or env.token == ""
   then
@@ -94,16 +95,18 @@ local function curl_request(method, endpoint, data, callback)
   end
 
   local env = get_env()
-  local url = env.base .. endpoint
+  local base = (env.base or ""):gsub("/+$", "")
+  local ep = endpoint:gsub("^/+", "/")
+  local url = base .. ep
 
   -- Build curl command
   local auth_header = ""
-  if env.type == "pat" then
+  local auth_module = require("jira.common.auth")
+  if auth_module.is_bearer(env.type) then
     auth_header = ('-H "Authorization: Bearer %s"'):format(env.token)
   else
     auth_header = ('-u "%s:%s"'):format(env.email, env.token)
   end
-
   local cmd = ('curl -s -X %s -H "Content-Type: application/json" -H "Accept: application/json" %s '):format(
     method,
     auth_header
@@ -182,7 +185,12 @@ local function curl_request(method, endpoint, data, callback)
       local ok, result = pcall(vim.json.decode, response)
       if not ok then
         if callback and vim.is_callable(callback) then
-          callback(nil, "Failed to parse JSON: " .. tostring(result) .. " | Resp: " .. response)
+          local html_title = response:match("<title>(.-)</title>")
+          if html_title then
+            callback(nil, ("HTTP Error (%s) | Resp: %s"):format(vim.trim(html_title), response:sub(1, 200)))
+          else
+            callback(nil, "Failed to parse JSON: " .. tostring(result) .. " | Resp: " .. response)
+          end
         end
         return
       end

@@ -600,7 +600,7 @@ function M.open_in_browser()
     return
   end
 
-  local auth = require("jira.common.auth").load() or {}
+  local auth = require("jira.common.auth").get_auth()
   local base = auth.base
 
   if not base or base == "" then
@@ -608,11 +608,8 @@ function M.open_in_browser()
     return
   end
 
-  if not base:match("/$") then
-    base = base .. "/"
-  end
-
-  local url = base .. "browse/" .. node.key
+  base = base:gsub("/+$", "")
+  local url = base .. "/browse/" .. node.key
   vim.ui.open(url)
 end
 
