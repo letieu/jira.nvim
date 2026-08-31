@@ -57,12 +57,10 @@ The plugin uses a command-based authentication system. Run the following command
 :Jira auth login
 ```
 
-You will be prompted for:
-1. **Jira Base URL**: (e.g., `https://your-domain.atlassian.net`)
-2. **Auth Type**: `basic` (default) or `pat`
-3. **Email**: (Required for `basic`)
-4. **API Token / PAT**: Your Jira API token or Personal Access Token
-
+1. **Jira Base URL**: (e.g., `https://your-domain.atlassian.net` or `https://jira.yourcompany.com`)
+2. **Auth Type**: `basic` (default) or `bearer / pat`
+3. **Email / Username**: (Required for `basic`)
+4. **API Token / Password / PAT**: Your Jira API token, Personal Access Token (PAT), or password
 Credentials are securely stored in your Neovim data directory (`:Jira auth info` to see the exact path).
 
 Other auth commands:
@@ -77,11 +75,15 @@ Other auth commands:
 require('jira').setup({
   -- Jira settings
   jira = {
-    api_version = "3",                          -- API version: "2" or "3" (default: "3")
+    api_version = "3",                          -- API version: "2" (Self-Hosted/Server/DC) or "3" (Cloud, default)
     limit = 200,                                -- Global limit of tasks per view (default: 200)
     logging = false,                            -- Enable HTTP request/response logging (default: false)
+    -- Optional: configure auth directly in setup instead of :Jira auth login
+    -- base = "https://jira.yourcompany.com",
+    -- type = "bearer",                         -- "basic" (default) or "bearer" / "pat"
+    -- token = "YOUR_PAT_OR_API_TOKEN",
+    -- email = "your_email_or_username",        -- Required for "basic" auth
   },
-
   active_sprint_query = "project = '%s' AND sprint in openSprints() ORDER BY Rank ASC",
 
   -- Saved JQL queries for the JQL tab

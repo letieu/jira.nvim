@@ -9,10 +9,12 @@ local FALLBACKS = {
 }
 
 ---@class JiraAuthOptions
----@field base string URL of your Jira instance (e.g. https://your-domain.atlassian.net)
+---@field base? string URL of your Jira instance (e.g. https://your-domain.atlassian.net)
 ---@field email? string Your Jira email (required for basic auth)
----@field token string Your Jira API token or PAT
----@field type? "basic"|"pat" Authentication type (default: "basic")
+---@field username? string Your Jira username (alias for email)
+---@field token? string Your Jira API token or PAT / Bearer token
+---@field type? "basic"|"pat"|"bearer" Authentication type (default: "basic")
+---@field auth_type? "basic"|"pat"|"bearer" Alias for type
 ---@field api_version? "2"|"3"|number API version to use (default: "3")
 ---@field limit? number Global limit of tasks when calling API
 ---@field logging? boolean Enable HTTP request/response logging (default: false)
