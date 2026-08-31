@@ -10,7 +10,7 @@ local function complete(_, cmd_line, _)
   local has_trailing_space = cmd_line:match("%s$")
 
   -- args[1] is "Jira"
-  
+
   -- Typing the first argument (subcommand)
   if #args == 1 and not has_trailing_space then
     return command.SUBCOMMANDS

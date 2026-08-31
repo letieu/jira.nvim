@@ -6,7 +6,15 @@ local M = {}
 
 -- Get API version from config/env
 function M.get_api_version()
-  return config.options.jira.api_version or "3"
+  local ver = config.options.jira.api_version
+  if ver == nil then
+    return "3"
+  end
+  ver = tostring(ver):lower():gsub("^v", "")
+  if ver == "2" then
+    return "2"
+  end
+  return "3"
 end
 
 -- Check if using API v2
@@ -55,21 +63,32 @@ end
 
 -- Transform search response based on version
 function M.transform_search_response(result)
+  if type(result) ~= "table" then
+    return { issues = {}, nextPageToken = nil }
+  end
+
   local version = M.get_api_version()
 
   local transformed
   if version == "2" then
     local next_token = nil
-    if result.startAt + result.maxResults < result.total then
-      next_token = tostring(result.startAt + result.maxResults)
+    local start_at = tonumber(result.startAt) or 0
+    local max_results = tonumber(result.maxResults) or 0
+    local total = tonumber(result.total) or 0
+
+    if total > 0 and (start_at + max_results < total) then
+      next_token = tostring(start_at + max_results)
     end
 
     transformed = {
-      issues = result.issues,
+      issues = result.issues or {},
       nextPageToken = next_token,
     }
   else
-    transformed = result
+    transformed = {
+      issues = result.issues or {},
+      nextPageToken = result.nextPageToken,
+    }
   end
   return transformed
 end
