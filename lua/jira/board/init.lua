@@ -418,13 +418,14 @@ function M.change_assignee()
       jira_api.get_myself(function(me, m_err)
         vim.schedule(function()
           common_ui.stop_loading()
-          if m_err or not me or not me.accountId then
+          local user_id = me and (me.accountId or me.name or me.key)
+          if m_err or not me or not user_id then
             vim.notify("Error fetching account info: " .. (m_err or "Unknown error"), vim.log.levels.ERROR)
             return
           end
 
           common_ui.start_loading("Assigning " .. node.key .. " to you...")
-          jira_api.assign_issue(node.key, me.accountId, function(_, a_err)
+          jira_api.assign_issue(node.key, user_id, function(_, a_err)
             vim.schedule(function()
               common_ui.stop_loading()
               if a_err then
@@ -600,7 +601,7 @@ function M.open_in_browser()
   end
 
   local auth = require("jira.common.auth").load() or {}
-  local base = auth.base;
+  local base = auth.base
 
   if not base or base == "" then
     vim.notify("Jira base URL is not configured, please login", vim.log.levels.ERROR)

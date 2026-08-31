@@ -32,13 +32,52 @@ local function validate_auth()
   local env = get_env()
   local is_pat = env.type == "pat"
 
-  if not env.base or env.base == ""
-      or (not is_pat and (not env.email or env.email == ""))
-      or not env.token or env.token == "" then
+  if
+    not env.base
+    or env.base == ""
+    or (not is_pat and (not env.email or env.email == ""))
+    or not env.token
+    or env.token == ""
+  then
     vim.notify("Missing Jira authentication. Use :Jira auth login.", vim.log.levels.ERROR)
     return false
   end
   return true
+end
+
+---Extract error message from Jira API response table
+---@param result? table
+---@return string|nil error_message
+local function extract_error(result)
+  if type(result) ~= "table" then
+    return nil
+  end
+
+  local errors = {}
+  if type(result.errorMessages) == "table" then
+    for _, msg in ipairs(result.errorMessages) do
+      if type(msg) == "string" and msg ~= "" then
+        table.insert(errors, msg)
+      end
+    end
+  end
+  if type(result.errors) == "table" then
+    for k, v in pairs(result.errors) do
+      if type(v) == "string" and v ~= "" then
+        table.insert(errors, k .. ": " .. v)
+      end
+    end
+  end
+
+  if #errors > 0 then
+    return table.concat(errors, "\n")
+  end
+
+  if type(result.message) == "string" and result.message ~= "" and (result["status-code"] or result.status) then
+    return result.message
+  end
+
+  return nil
 end
 
 ---Execute curl command asynchronously
@@ -147,6 +186,13 @@ local function curl_request(method, endpoint, data, callback)
         end
         return
       end
+      local api_err = extract_error(result)
+      if api_err then
+        if callback and vim.is_callable(callback) then
+          callback(nil, api_err)
+        end
+        return
+      end
 
       if callback and vim.is_callable(callback) then
         callback(result, nil)
@@ -168,17 +214,17 @@ local M = {}
 function M.search_issues(jql, page_token, max_results, fields, callback, project_key)
   local story_point_field = config.get_project_config(project_key).story_point_field
   fields = fields
-      or {
-        "summary",
-        "status",
-        "parent",
-        "priority",
-        "assignee",
-        "timespent",
-        "timeoriginalestimate",
-        "issuetype",
-        story_point_field,
-      }
+    or {
+      "summary",
+      "status",
+      "parent",
+      "priority",
+      "assignee",
+      "timespent",
+      "timeoriginalestimate",
+      "issuetype",
+      story_point_field,
+    }
 
   local data = version.transform_search_data(jql, page_token, max_results, fields)
   local endpoint = version.get_search_endpoint()
@@ -267,11 +313,22 @@ function M.add_worklog(issue_key, time_spent, comment, callback)
 end
 
 -- Assign an issue to a user
+---@param issue_key string
+---@param user_id string|table
 ---@param callback? fun(cond?: boolean, err?: string)
-function M.assign_issue(issue_key, account_id, callback)
-  local data = {
-    accountId = account_id,
-  }
+function M.assign_issue(issue_key, user_id, callback)
+  local data
+  if type(user_id) == "table" then
+    data = user_id
+  elseif version.is_v2() then
+    data = {
+      name = (user_id == "-1" and "-1") or user_id,
+    }
+  else
+    data = {
+      accountId = (user_id == "-1" and "-1") or user_id,
+    }
+  end
 
   local endpoint = version.get_api_path() .. "/issue/" .. issue_key .. "/assignee"
   curl_request("PUT", endpoint, data, function(_, err)
