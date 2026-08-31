@@ -187,10 +187,7 @@ local function curl_request(method, endpoint, data, callback)
         if callback and vim.is_callable(callback) then
           local html_title = response:match("<title>(.-)</title>")
           if html_title then
-            callback(
-              nil,
-              ("HTTP Error (%s) | Resp: %s"):format(vim.trim(html_title), response:sub(1, 200))
-            )
+            callback(nil, ("HTTP Error (%s) | Resp: %s"):format(vim.trim(html_title), response:sub(1, 200)))
           else
             callback(nil, "Failed to parse JSON: " .. tostring(result) .. " | Resp: " .. response)
           end

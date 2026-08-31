@@ -139,7 +139,51 @@ T["auth"]["save_and_load"]["should save and load bearer credentials"] = function
   MiniTest.expect.equality(child.lua_get([[_G.resolved.base]]), "https://jira.corp.internal")
   MiniTest.expect.equality(child.lua_get([[_G.resolved.type]]), "bearer")
 end
+T["auth"]["save_and_load"]["should save and load basic credentials"] = function()
+  child.lua([[
+    local auth = require("jira.common.auth")
+    auth.save({
+      base = "https://jira.corp.internal/",
+      email = "user@domain.com",
+      token = "user-api-token",
+      type = "basic",
+    })
 
+    _G.loaded = auth.load()
+    _G.resolved = auth.get_auth()
+    auth.logout()
+  ]])
+  MiniTest.expect.equality(child.lua_get([[_G.loaded.base]]), "https://jira.corp.internal/")
+  MiniTest.expect.equality(child.lua_get([[_G.loaded.email]]), "user@domain.com")
+  MiniTest.expect.equality(child.lua_get([[_G.loaded.token]]), "user-api-token")
+  MiniTest.expect.equality(child.lua_get([[_G.loaded.type]]), "basic")
+  MiniTest.expect.equality(child.lua_get([[_G.resolved.base]]), "https://jira.corp.internal")
+  MiniTest.expect.equality(child.lua_get([[_G.resolved.email]]), "user@domain.com")
+  MiniTest.expect.equality(child.lua_get([[_G.resolved.type]]), "basic")
+end
+
+T["auth"]["show_info"] = MiniTest.new_set()
+
+T["auth"]["show_info"]["should warn when not logged in"] = function()
+  child.lua([[
+    local auth = require("jira.common.auth")
+    local config = require("jira.common.config")
+    auth.logout()
+    config.setup({})
+
+    _G.notified = {}
+    local orig_notify = vim.notify
+    vim.notify = function(msg, level)
+      table.insert(_G.notified, { msg = msg, level = level })
+    end
+
+    auth.show_info()
+    vim.notify = orig_notify
+  ]])
+  MiniTest.expect.equality(child.lua_get([[#_G.notified]]), 1)
+  local msg = child.lua_get([[_G.notified[1].msg]])
+  Helpers.expect.match(msg, "Not logged in to Jira")
+end
 T["auth"]["show_info"] = MiniTest.new_set()
 
 T["auth"]["show_info"]["should format and display auth info without error"] = function()

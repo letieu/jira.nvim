@@ -24,6 +24,10 @@ end
 ---Save auth data to disk
 ---@param data JiraAuth
 function M.save(data)
+  local dir = vim.fn.fnamemodify(AUTH_FILE, ":h")
+  if vim.fn.isdirectory(dir) == 0 then
+    vim.fn.mkdir(dir, "p")
+  end
   local f = io.open(AUTH_FILE, "w")
   if f then
     f:write(vim.json.encode(data))
@@ -100,9 +104,7 @@ function M.get_auth()
   auth.type = raw_type
   auth.auth_type = raw_type
 
-  auth.api_version = file_auth.api_version
-    or os.getenv("JIRA_API_VERSION")
-    or cfg.api_version
+  auth.api_version = file_auth.api_version or os.getenv("JIRA_API_VERSION") or cfg.api_version
 
   return auth
 end
@@ -125,33 +127,27 @@ function M.login()
       end
 
       if not is_bearer then
-        vim.ui.input(
-          { prompt = "Jira Email / Username: ", default = current.email or "" },
-          function(email)
-            if not email or email == "" then
-              return
-            end
-            vim.ui.input({ prompt = "Jira API Token / Password: " }, function(token)
-              if not token or token == "" then
-                return
-              end
-              M.save({ base = base, email = email, token = token, type = "basic" })
-            end)
+        vim.ui.input({ prompt = "Jira Email / Username: ", default = current.email or "" }, function(email)
+          if not email or email == "" then
+            return
           end
-        )
-      else
-        vim.ui.input(
-          {
-            prompt = "Jira Bearer Token / PAT: ",
-            default = (M.is_bearer(current.type) and current.token) or "",
-          },
-          function(token)
+          vim.ui.input({ prompt = "Jira API Token / Password: " }, function(token)
             if not token or token == "" then
               return
             end
-            M.save({ base = base, token = token, type = "bearer" })
+            M.save({ base = base, email = email, token = token, type = "basic" })
+          end)
+        end)
+      else
+        vim.ui.input({
+          prompt = "Jira Bearer Token / PAT: ",
+          default = (M.is_bearer(current.type) and current.token) or "",
+        }, function(token)
+          if not token or token == "" then
+            return
           end
-        )
+          M.save({ base = base, token = token, type = "bearer" })
+        end)
       end
     end)
   end)
