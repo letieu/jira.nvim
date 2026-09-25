@@ -5,42 +5,50 @@ local common_ui = require("jira.common.ui")
 local util = require("jira.common.util")
 
 local function setup_keymaps()
-  local opts = { noremap = true, silent = true, buffer = state.buf }
+  local keymap_set = function(mode, left, right, desc)
+    vim.keymap.set(mode, left, right, {
+      noremap = true,
+      silent = true,
+      buffer = state.buf,
+      desc = 'Jira: ' .. desc,
+    })
+  end
+
 
   -- Quit
-  vim.keymap.set("n", "q", function()
+  keymap_set("n", "q", function()
     if state.win and vim.api.nvim_win_is_valid(state.win) then
       vim.api.nvim_win_close(state.win, true)
       if state.prev_win and vim.api.nvim_win_is_valid(state.prev_win) then
         vim.api.nvim_set_current_win(state.prev_win)
       end
     end
-  end, opts)
+  end, 'Quit')
 
   -- Switch Tabs
-  vim.keymap.set("n", "<Tab>", function()
+  keymap_set("n", "<Tab>", function()
     local next_tab = { description = "comments", comments = "help", help = "description" }
     state.active_tab = next_tab[state.active_tab] or "description"
     render.render_content()
-  end, opts)
+  end, 'Switch tabs')
 
-  vim.keymap.set("n", "D", function()
+  keymap_set("n", "D", function()
     state.active_tab = "description"
     render.render_content()
-  end, opts)
+  end, 'Issue description')
 
-  vim.keymap.set("n", "C", function()
+  keymap_set("n", "C", function()
     state.active_tab = "comments"
     render.render_content()
-  end, opts)
+  end, 'Issue comments')
 
-  vim.keymap.set("n", "H", function()
+  keymap_set("n", "H", function()
     state.active_tab = "help"
     render.render_content()
-  end, opts)
+  end, 'Help')
 
   -- Add Comment / Edit Description
-  vim.keymap.set("n", "i", function()
+  keymap_set("n", "i", function()
     if state.active_tab == "description" then
       require("jira.edit").open(state.issue.key)
       return
@@ -111,10 +119,10 @@ local function setup_keymaps()
       vim.cmd("stopinsert")
       vim.api.nvim_win_close(win, true)
     end, { buffer = buf })
-  end, opts)
+  end, 'Add comment/edit description')
 
   -- Edit Comment
-  vim.keymap.set("n", "r", function()
+  keymap_set("n", "r", function()
     if state.active_tab ~= "comments" then
       return
     end
@@ -189,7 +197,7 @@ local function setup_keymaps()
       vim.cmd("stopinsert")
       vim.api.nvim_win_close(win, true)
     end, { buffer = buf })
-  end, opts)
+  end, 'Edit comment')
 end
 
 ---@class Jira.Issue

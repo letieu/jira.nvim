@@ -246,13 +246,13 @@ function M.open_jql_input(default, callback)
     end
   end
 
-  vim.keymap.set({ "n", "i" }, "<CR>", submit, { buffer = buf, silent = true })
+  vim.keymap.set({ "n", "i" }, "<CR>", submit, { buffer = buf, silent = true, desc = 'Jira: Submit' })
   vim.keymap.set("n", "q", function()
     vim.api.nvim_win_close(win, true)
-  end, { buffer = buf, silent = true })
+  end, { buffer = buf, silent = true, desc = 'Jira: Close window' })
   vim.keymap.set("n", "<Esc>", function()
     vim.api.nvim_win_close(win, true)
-  end, { buffer = buf, silent = true })
+  end, { buffer = buf, silent = true, desc = 'Jira: Close window' })
 end
 
 return M

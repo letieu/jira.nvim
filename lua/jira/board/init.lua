@@ -134,7 +134,14 @@ function M.cycle_jql_query()
 end
 
 function M.setup_keymaps()
-  local opts = { noremap = true, silent = true, buffer = state.buf }
+  local keymap_set = function(mode, left, right, desc)
+    vim.keymap.set(mode, left, right, {
+      noremap = true,
+      silent = true,
+      buffer = state.buf,
+      desc = 'Jira: ' .. desc,
+    })
+  end
 
   -- Clear existing buffer keymaps
   local keys_to_clear = {
@@ -166,79 +173,79 @@ function M.setup_keymaps()
   end
 
   -- General
-  vim.keymap.set("n", "q", function()
+  keymap_set("n", "q", function()
     if state.win and api.nvim_win_is_valid(state.win) then
       api.nvim_win_close(state.win, true)
     end
-  end, opts)
+  end, 'Close window')
 
-  vim.keymap.set("n", "r", function()
+  keymap_set("n", "r", function()
     require("jira.board").refresh_view()
-  end, opts)
+  end, 'Refresh view')
 
   -- Navigation
-  vim.keymap.set("n", "<Tab>", function()
+  keymap_set("n", "<Tab>", function()
     require("jira.board").toggle_node()
-  end, opts)
-  vim.keymap.set("n", "zR", function()
+  end, 'Toggle node')
+  keymap_set("n", "zR", function()
     require("jira.board").set_all_expanded(true)
-  end, opts)
-  vim.keymap.set("n", "zM", function()
+  end, 'Expand all')
+  keymap_set("n", "zM", function()
     require("jira.board").set_all_expanded(false)
-  end, opts)
-  vim.keymap.set("n", "<CR>", function()
+  end, 'Collapse all')
+  keymap_set("n", "<CR>", function()
     require("jira.board").handle_cr()
-  end, opts)
+  end, 'Enter')
 
   -- View switching
-  vim.keymap.set("n", "S", function()
+  keymap_set("n", "S", function()
     require("jira.board").load_view(state.project_key, "Active Sprint")
-  end, opts)
-  vim.keymap.set("n", "J", function()
+  end, 'View active sprint')
+  keymap_set("n", "J", function()
     if state.current_view == "JQL" then
       require("jira.board").cycle_jql_query()
     else
       require("jira.board").load_view(state.project_key, "JQL")
     end
-  end, opts)
-  vim.keymap.set("n", "H", function()
+  end, 'View JQL')
+  keymap_set("n", "H", function()
     require("jira.board").load_view(state.project_key, "Help")
-  end, opts)
+  end, 'View help')
 
   -- Issue Actions
-  vim.keymap.set("n", "K", function()
+  keymap_set("n", "K", function()
     require("jira.board").show_issue_details()
-  end, opts)
-  vim.keymap.set("n", "gd", function()
+  end, 'Read short issue details')
+  keymap_set("n", "gd", function()
     require("jira.board").read_task()
-  end, opts)
-  vim.keymap.set("n", "ge", function()
+  end, 'Read issue details')
+  keymap_set("n", "ge", function()
     require("jira.board").edit_issue()
-  end, opts)
-  vim.keymap.set("n", "gx", function()
+  end, 'Edit issue')
+  keymap_set("n", "gx", function()
     require("jira.board").open_in_browser()
-  end, opts)
-  vim.keymap.set("n", "gs", function()
+  end, 'Open in browser')
+  keymap_set("n", "gs", function()
     require("jira.board").change_status()
-  end, opts)
-  vim.keymap.set("n", "ga", function()
+  end, 'Change status')
+  keymap_set("n", "ga", function()
     require("jira.board").change_assignee()
-  end, opts)
-  vim.keymap.set("n", "i", function()
+  end, 'Change assignee')
+  keymap_set("n", "i", function()
     require("jira.board").create_issue()
-  end, opts)
-  vim.keymap.set("n", "gw", function()
+  end, 'Create issue')
+  keymap_set("n", "gw", function()
     require("jira.board").log_time()
-  end, opts)
-  vim.keymap.set("n", "gb", function()
+  end, 'Log time')
+  keymap_set("n", "gb", function()
     require("jira.board").checkout_branch()
-  end, opts)
-  vim.keymap.set("n", "go", function()
+  end, 'Checkout branch')
+  keymap_set("n", "go", function()
     require("jira.board").show_child_issues()
-  end, opts)
-  vim.keymap.set("n", "gp", function()
+  end, 'Show child issues')
+  keymap_set("n", "gp", function()
     require("jira.board").show_parent_issue()
-  end, opts)
+  end, 'Show parent issue')
 end
 
 function M.load_view(project_key, view_name)
