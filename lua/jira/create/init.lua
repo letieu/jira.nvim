@@ -317,7 +317,7 @@ function M.open(project_key, parent_key)
   })
 
   -- Keymap for selection
-  vim.keymap.set("n", "<CR>", select_issue_type, { buffer = buf, silent = true })
+  vim.keymap.set("n", "<CR>", select_issue_type, { buffer = buf, silent = true, desc = 'Jira: Select issue type' })
 
   -- Fetch valid issue types
   jira_api.get_create_meta(project_key, function(issue_types, err)
